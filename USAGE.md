@@ -193,6 +193,11 @@ Both the terminal and the browser treat it the same way.
 | 10   | 20   | 30   |
 ~~~
 
+**Task lists have no bullet, matching GitHub.** GitHub's own stylesheet sets
+`list-style-type: none` on task items and pulls the checkbox into the marker's
+place, so `☐` and `☑` stand where a `•` would, and task text lines up with
+ordinary bullet text.
+
 **Blank lines between groups of bullets are kept.** Markdown normally collapses
 them, so the app restores the gap in the preview. Runs come out as 1, 3, 5, 7…
 lines: an odd number of blank lines is exact, an even number lands one short.

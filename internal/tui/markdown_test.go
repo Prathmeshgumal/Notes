@@ -199,3 +199,37 @@ func TestTableNeedsItsSeparatorRow(t *testing.T) {
 		t.Errorf("without a separator row this should not become a table:\n%s", without)
 	}
 }
+
+// GitHub renders a task item with no bullet, the checkbox standing in the
+// marker's place, so task text aligns with the text of ordinary bullets.
+func TestTaskTextAlignsWithBulletText(t *testing.T) {
+	out := renderToPlain(t, "- [x] done\n- [ ] open\n- plain bullet\n")
+
+	cols := map[string]int{}
+	for _, line := range strings.Split(out, "\n") {
+		for _, word := range []string{"done", "open", "plain"} {
+			if i := strings.Index(line, word); i >= 0 {
+				cols[word] = len([]rune(line[:i]))
+			}
+		}
+	}
+	if len(cols) != 3 {
+		t.Fatalf("could not find all three items in:\n%s", out)
+	}
+	if cols["done"] != cols["plain"] || cols["open"] != cols["plain"] {
+		t.Errorf("task text should start in the same column as bullet text: %v", cols)
+	}
+}
+
+func TestCheckboxesUseBoxGlyphs(t *testing.T) {
+	out := renderToPlain(t, "- [x] done\n- [ ] open\n")
+	if !strings.Contains(out, "☑") {
+		t.Errorf("a completed task should show a ticked box:\n%s", out)
+	}
+	if !strings.Contains(out, "☐") {
+		t.Errorf("an open task should show an empty box:\n%s", out)
+	}
+	if strings.Contains(out, "[ ]") || strings.Contains(out, "[✓]") {
+		t.Errorf("the bracketed markers should be gone:\n%s", out)
+	}
+}

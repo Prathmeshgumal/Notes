@@ -223,6 +223,14 @@ func markedUpStyle(name string) ansi.StyleConfig {
 	}
 	cfg.LinkText.Prefix = linkOpenMarker
 	cfg.LinkText.Suffix = linkCloseMarker
+
+	// GitHub gives a task item no bullet: its stylesheet sets
+	// list-style-type:none and pulls the checkbox into the marker's place with
+	// a negative margin. A one-cell box does the same here, so task text lines
+	// up with the text of ordinary bullets instead of sitting indented past it.
+	cfg.Task.Ticked = "☑ "
+	cfg.Task.Unticked = "☐ "
+
 	return cfg
 }
 
