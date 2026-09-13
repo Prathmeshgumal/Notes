@@ -99,21 +99,28 @@ func (m model) sidebarContent(height int) string {
 }
 
 func (m model) editView() string {
-	label := "New note"
+	label := titleStyle.Render("New note")
 	if m.editing != nil {
-		label = "Editing · " + relativeTime(m.editing.UpdatedAt)
+		label = titleStyle.Render("Editing") + dimStyle.Render(" · "+relativeTime(m.editing.UpdatedAt))
 	}
 
 	titleBox := paneStyle.Width(m.width - 4).Render(m.title.View())
 	if m.focusTitle {
 		titleBox = focusedPane.Width(m.width - 4).Render(m.title.View())
 	}
+
+	if m.previewDraft {
+		label += dimStyle.Render("  ·  preview")
+		box := focusedPane.Width(m.width - 4).Render(m.draft.View())
+		return " " + label + "\n" + titleBox + "\n" + box + "\n" + m.footer()
+	}
+
 	bodyBox := focusedPane.Width(m.width - 4).Render(m.body.View())
 	if m.focusTitle {
 		bodyBox = paneStyle.Width(m.width - 4).Render(m.body.View())
 	}
 
-	return titleStyle.Render(" "+label) + "\n" + titleBox + "\n" + bodyBox + "\n" + m.footer()
+	return " " + label + "\n" + titleBox + "\n" + bodyBox + "\n" + m.footer()
 }
 
 func (m model) trashView() string {

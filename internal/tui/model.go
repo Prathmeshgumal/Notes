@@ -40,8 +40,10 @@ type model struct {
 	body    textarea.Model
 	preview viewport.Model
 
-	editing    *store.Note // nil while composing a brand-new note
-	focusTitle bool
+	editing      *store.Note // nil while composing a brand-new note
+	focusTitle   bool
+	previewDraft bool // showing the draft rendered, rather than its source
+	draft        viewport.Model
 
 	server *web.Server
 	status string
@@ -113,6 +115,7 @@ func New(st *store.Store) model {
 		title:        title,
 		body:         body,
 		preview:      viewport.New(0, 0),
+		draft:        viewport.New(0, 0),
 		mode:         modeList,
 		// Sensible defaults so the first frame renders even if the terminal
 		// never reports its size; WindowSizeMsg overrides these.
@@ -167,6 +170,9 @@ func (m *model) layout() {
 	}
 	m.preview.Width = previewWidth
 	m.preview.Height = paneHeight - 3
+
+	m.draft.Width = m.width - 6
+	m.draft.Height = paneHeight - 4
 
 	m.title.Width = m.width - 6
 	m.body.SetWidth(m.width - 6)
@@ -262,6 +268,7 @@ func markedUpStyle(name string) ansi.StyleConfig {
 func (m *model) startEdit(n *store.Note) {
 	m.mode = modeEdit
 	m.focusTitle = false
+	m.previewDraft = false
 	if n == nil {
 		m.editing = nil
 		m.title.SetValue("")
@@ -302,6 +309,40 @@ func (m *model) placeBodyCursor(row, col int) {
 // markBody applies Markdown emphasis around the word under the caret.
 func (m *model) markBody(open, close string) {
 	value, pos := mark(m.body.Value(), m.bodyCursor(), open, close)
+	m.body.SetValue(value)
+	row, col := rowColAt(value, pos)
+	m.placeBodyCursor(row, col)
+}
+
+// renderDraft renders what is currently being written, so the preview shows
+// unsaved work rather than the note as it was last saved.
+func (m *model) renderDraft() {
+	width := m.draft.Width
+	if width < 20 {
+		width = 20
+	}
+	content := m.body.Value()
+	if strings.TrimSpace(content) == "" {
+		m.draft.SetContent(dimStyle.Render("\n  Nothing to preview yet."))
+		return
+	}
+	r, err := newRenderer(m.glamourStyle, width-2)
+	if err != nil {
+		m.draft.SetContent(content)
+		return
+	}
+	out, err := r.Render(separateListGroups(hideLinkTargets(content)))
+	if err != nil {
+		m.draft.SetContent(content)
+		return
+	}
+	m.draft.SetContent(linkifyRendered(out, OrderedTargets(content)))
+	m.draft.GotoTop()
+}
+
+// applyLine runs one of the line-based formatting helpers on the body.
+func (m *model) applyLine(fn func(string, int) (string, int)) {
+	value, pos := fn(m.body.Value(), m.bodyCursor())
 	m.body.SetValue(value)
 	row, col := rowColAt(value, pos)
 	m.placeBodyCursor(row, col)

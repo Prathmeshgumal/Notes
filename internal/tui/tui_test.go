@@ -541,3 +541,109 @@ func TestConfirmPromptsNameTheirTarget(t *testing.T) {
 		t.Errorf("a permanent delete should say so: %q", purge.confirmPrompt)
 	}
 }
+
+// Every formatting key must reach its action through the update loop, not just
+// work as a function.
+func TestFormattingKeysAreWired(t *testing.T) {
+	for _, tc := range []struct {
+		keys  []tea.KeyMsg
+		typed string
+		want  string
+	}{
+		{[]tea.KeyMsg{{Type: tea.KeyCtrlB}}, "word", "**word**"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'i'}, Alt: true}}, "word", "*word*"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'s'}, Alt: true}}, "word", "~~word~~"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'c'}, Alt: true}}, "word", "`word`"},
+		{[]tea.KeyMsg{{Type: tea.KeyCtrlK}}, "word", "[word]()"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'h'}, Alt: true}}, "line", "# line"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'q'}, Alt: true}}, "line", "> line"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'8'}, Alt: true}}, "line", "- line"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'7'}, Alt: true}}, "line", "1. line"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'t'}, Alt: true}}, "line", "- [ ] line"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'f'}, Alt: true}}, "code", "```\ncode\n```"},
+	} {
+		m, _ := newTestModel(t)
+		m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+		m = press(m, key('n'))
+		for _, r := range tc.typed {
+			m = press(m, key(r))
+		}
+		for _, k := range tc.keys {
+			m = press(m, k)
+		}
+		if got := m.body.Value(); got != tc.want {
+			t.Errorf("%v on %q gave %q, want %q", tc.keys[0], tc.typed, got, tc.want)
+		}
+	}
+}
+
+func TestAltXTicksTheTaskUnderTheCursor(t *testing.T) {
+	m, _ := newTestModel(t)
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, key('n'))
+	for _, r := range "feed the cat" {
+		m = press(m, key(r))
+	}
+	m = press(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}, Alt: true})
+	if got := m.body.Value(); got != "- [ ] feed the cat" {
+		t.Fatalf("alt+t gave %q", got)
+	}
+	m = press(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'x'}, Alt: true})
+	if got := m.body.Value(); got != "- [x] feed the cat" {
+		t.Errorf("alt+x gave %q", got)
+	}
+}
+
+// ctrl+p previews the draft, which must show unsaved text, not the saved note.
+func TestPreviewShowsUnsavedText(t *testing.T) {
+	m, st := newTestModel(t)
+	n, err := st.Create("Note", "saved content")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnter})
+	_ = n
+
+	for _, r := range " plus unsaved" {
+		m = press(m, key(r))
+	}
+	m = press(m, tea.KeyMsg{Type: tea.KeyCtrlP})
+	if !m.previewDraft {
+		t.Fatal("ctrl+p did not turn the preview on")
+	}
+	view := stripANSI(m.View())
+	if !strings.Contains(view, "unsaved") {
+		t.Errorf("the preview does not show the unsaved text:\n%s", view)
+	}
+
+	m = press(m, tea.KeyMsg{Type: tea.KeyCtrlP})
+	if m.previewDraft {
+		t.Error("ctrl+p did not turn the preview back off")
+	}
+}
+
+// Formatting must not fire while the single-line title has focus.
+func TestFormattingIsIgnoredInTheTitleField(t *testing.T) {
+	m, _ := newTestModel(t)
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, key('n'))
+	m = press(m, tea.KeyMsg{Type: tea.KeyTab})
+	for _, r := range "title" {
+		m = press(m, key(r))
+	}
+	for _, k := range []tea.KeyMsg{
+		{Type: tea.KeyCtrlB},
+		{Type: tea.KeyRunes, Runes: []rune{'8'}, Alt: true},
+		{Type: tea.KeyRunes, Runes: []rune{'h'}, Alt: true},
+	} {
+		m = press(m, k)
+	}
+	if got := m.title.Value(); got != "title" {
+		t.Errorf("title = %q, want it untouched", got)
+	}
+	if got := m.body.Value(); got != "" {
+		t.Errorf("body = %q, want it untouched", got)
+	}
+}

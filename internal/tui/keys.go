@@ -17,7 +17,10 @@ func (m model) helpLine() string {
 	case modeSearch:
 		return "type to filter   ↵ accept   esc clear"
 	case modeEdit:
-		return "ctrl+s save  ctrl+b bold  alt+i italic  ctrl+k link  tab title/body  ctrl+e $EDITOR  esc cancel"
+		if m.previewDraft {
+			return "ctrl+p back to writing   ctrl+s save   esc cancel"
+		}
+		return "ctrl+s save  ctrl+p preview  ctrl+b bold  alt+i italic  ctrl+k link  ? in help: all keys  esc cancel"
 	case modeConfirm:
 		return "y confirm   n / esc cancel"
 	case modeTrash:
@@ -41,12 +44,23 @@ const helpText = `
   Writing
     ↵            edit the selected note
     n            new note
-    ctrl+b       bold the word under the cursor (while editing)
-    alt+i        italic — ctrl+i is Tab in a terminal, so alt is used
-    ctrl+k       turn the word into a link
-    ctrl+e       open $EDITOR (while editing)
     ctrl+s       save
+    ctrl+p       preview what you are writing
+    tab          switch between the title and the body
+    ctrl+e       open $EDITOR
     esc          cancel
+
+  Formatting, while editing the body
+    ctrl+b       bold          alt+8    bulleted list
+    alt+i        italic        alt+7    numbered list
+    alt+s        strikethrough alt+t    task list
+    alt+c        inline code   alt+x    tick / untick a task
+    alt+f        code block    alt+r    horizontal rule
+    ctrl+k       link          alt+h    heading (press again for deeper)
+    alt+q        blockquote
+
+    Most are alt+ because a terminal spends the control range on its own
+    codes: ctrl+i is Tab, ctrl+h is Backspace, ctrl+m is Enter.
 
   Other
     o            open a link from this note (again for the next one)

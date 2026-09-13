@@ -62,15 +62,30 @@ While editing:
 | `ctrl+s` | Save and go back to the list |
 | `esc` | Discard changes |
 | `tab` | Switch between the title field and the body |
-| `ctrl+b` | Bold the word under the cursor |
-| `alt+i` | Italic the word under the cursor |
-| `ctrl+k` | Turn the word into a link, cursor ready for the address |
+| `ctrl+p` | Preview what you are writing; press again to go back |
+| `ctrl+b` | Bold |
+| `alt+i` | Italic |
+| `alt+s` | Strikethrough |
+| `alt+c` | Inline code |
+| `alt+f` | Code block |
+| `ctrl+k` | Link, cursor ready for the address |
+| `alt+h` | Heading — press again for a deeper one |
+| `alt+q` | Blockquote |
+| `alt+8` | Bulleted list |
+| `alt+7` | Numbered list |
+| `alt+t` | Task list |
+| `alt+x` | Tick or untick the task under the cursor |
+| `alt+r` | Horizontal rule |
 | `ctrl+e` | Hand the body to `$EDITOR`; save and quit there to come back |
 | `↵` | New line (when the body has focus) |
 
-Formatting keys work on the word under the cursor and toggle off if you press
-them again. `alt+i` carries italic because **`ctrl+i` is Tab** in every
-terminal — they are the same byte — and Tab already switches title and body.
+`ctrl+b`, `alt+i`, `alt+s`, `alt+c` and `ctrl+k` act on the word under the
+cursor; the rest act on the line. All of them toggle off if you press them
+again, and the list types convert between each other rather than stacking.
+
+Most are `alt+` because a terminal spends the control range on its own codes:
+**`ctrl+i` is Tab**, `ctrl+h` is Backspace and `ctrl+m` is Enter — the same
+bytes, indistinguishable to any program.
 
 The mouse is left to your terminal, so selecting and copying text works exactly
 as it does anywhere else. Move the cursor with the arrow keys.

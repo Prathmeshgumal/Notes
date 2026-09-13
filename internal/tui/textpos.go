@@ -1,6 +1,9 @@
 package tui
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // Cursor arithmetic for the editor. The textarea works in rows and columns;
 // these translate to and from an offset into the whole note so the formatting
@@ -109,4 +112,156 @@ func link(value string, offset int) (string, int) {
 	word := value[start:end]
 	return value[:start] + "[" + word + "]()" + value[end:],
 		start + len(word) + 3
+}
+
+// Line-based formatting. Each takes the whole note and a cursor offset, and
+// returns the new text with the cursor kept on the same line.
+
+func lineBounds(value string, offset int) (int, int) {
+	if offset > len(value) {
+		offset = len(value)
+	}
+	start := strings.LastIndexByte(value[:offset], '\n') + 1
+	end := strings.IndexByte(value[start:], '\n')
+	if end < 0 {
+		return start, len(value)
+	}
+	return start, start + end
+}
+
+// editLine replaces the line under the cursor with fn(line), leaving the cursor
+// at the same position within it.
+func editLine(value string, offset int, fn func(string) string) (string, int) {
+	start, end := lineBounds(value, offset)
+	old := value[start:end]
+	next := fn(old)
+	return value[:start] + next + value[end:], offset + len(next) - len(old)
+}
+
+// indentOf splits a line into its leading whitespace and the rest, so a marker
+// added to an indented line goes after the indentation, not before it.
+func indentOf(line string) (string, string) {
+	i := 0
+	for i < len(line) && (line[i] == ' ' || line[i] == '\t') {
+		i++
+	}
+	return line[:i], line[i:]
+}
+
+var (
+	headingPrefix = regexp.MustCompile(`^(#{1,6}) `)
+	bulletPrefix  = regexp.MustCompile(`^(\s*)[-*+] `)
+	numberPrefix  = regexp.MustCompile(`^(\s*)\d+\. `)
+	taskPrefix    = regexp.MustCompile(`^(\s*)[-*+] \[[ xX]\] `)
+	quotePrefix   = regexp.MustCompile(`^> ?`)
+)
+
+// heading cycles the line through #, ##, … ###### and back to plain, the way
+// the web toolbar's heading button does.
+func heading(value string, offset int) (string, int) {
+	return editLine(value, offset, func(line string) string {
+		m := headingPrefix.FindStringSubmatch(line)
+		if m == nil {
+			return "# " + line
+		}
+		if len(m[1]) >= 6 {
+			return line[len(m[0]):]
+		}
+		return "#" + line
+	})
+}
+
+// bullet toggles "- " on the line, keeping any indentation.
+func bullet(value string, offset int) (string, int) {
+	return editLine(value, offset, func(line string) string {
+		if m := taskPrefix.FindStringSubmatch(line); m != nil {
+			return m[1] + "- " + line[len(m[0]):] // a task is already a bullet
+		}
+		if m := bulletPrefix.FindStringSubmatch(line); m != nil {
+			return m[1] + line[len(m[0]):]
+		}
+		if m := numberPrefix.FindStringSubmatch(line); m != nil {
+			return m[1] + "- " + line[len(m[0]):]
+		}
+		indent, rest := indentOf(line)
+		return indent + "- " + rest
+	})
+}
+
+// numbered toggles "1. " on the line. The number is left at 1: Markdown
+// renumbers a list from its first item, so the rendered output is still right.
+func numbered(value string, offset int) (string, int) {
+	return editLine(value, offset, func(line string) string {
+		if m := numberPrefix.FindStringSubmatch(line); m != nil {
+			return m[1] + line[len(m[0]):]
+		}
+		if m := taskPrefix.FindStringSubmatch(line); m != nil {
+			return m[1] + "1. " + line[len(m[0]):]
+		}
+		if m := bulletPrefix.FindStringSubmatch(line); m != nil {
+			return m[1] + "1. " + line[len(m[0]):]
+		}
+		indent, rest := indentOf(line)
+		return indent + "1. " + rest
+	})
+}
+
+// task toggles "- [ ] ", and ticks or unticks a box that is already there.
+func task(value string, offset int) (string, int) {
+	return editLine(value, offset, func(line string) string {
+		if m := taskPrefix.FindStringSubmatch(line); m != nil {
+			return m[1] + "- " + line[len(m[0]):]
+		}
+		if m := bulletPrefix.FindStringSubmatch(line); m != nil {
+			return m[1] + "- [ ] " + line[len(m[0]):]
+		}
+		if m := numberPrefix.FindStringSubmatch(line); m != nil {
+			return m[1] + "- [ ] " + line[len(m[0]):]
+		}
+		indent, rest := indentOf(line)
+		return indent + "- [ ] " + rest
+	})
+}
+
+// toggleTick flips a task between done and not done, which is what a reader
+// actually wants from a checklist.
+func toggleTick(value string, offset int) (string, int) {
+	return editLine(value, offset, func(line string) string {
+		m := taskPrefix.FindStringSubmatch(line)
+		if m == nil {
+			return line
+		}
+		box := m[0][len(m[1]) : len(m[0])-1] // "- [ ]" or "- [x]"
+		if strings.ContainsAny(box, "xX") {
+			return m[1] + "- [ ] " + line[len(m[0]):]
+		}
+		return m[1] + "- [x] " + line[len(m[0]):]
+	})
+}
+
+func quote(value string, offset int) (string, int) {
+	return editLine(value, offset, func(line string) string {
+		if m := quotePrefix.FindString(line); m != "" {
+			return line[len(m):]
+		}
+		return "> " + line
+	})
+}
+
+// rule inserts a horizontal rule on its own line below the cursor.
+func rule(value string, offset int) (string, int) {
+	_, end := lineBounds(value, offset)
+	insert := "\n\n---\n"
+	return value[:end] + insert + value[end:], end + len(insert)
+}
+
+// codeBlock wraps the current line in a fence, or inserts an empty one.
+func codeBlock(value string, offset int) (string, int) {
+	start, end := lineBounds(value, offset)
+	line := value[start:end]
+	if strings.TrimSpace(line) == "" {
+		insert := "```\n\n```"
+		return value[:start] + insert + value[end:], start + 4
+	}
+	return value[:start] + "```\n" + line + "\n```" + value[end:], end + 4
 }

@@ -137,11 +137,54 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmd, m.reload())
 
 	case modeEdit:
-		// ctrl+i is Tab in a terminal, so italic takes alt+i instead.
-		if msg.String() == "alt+i" && !m.focusTitle {
-			m.markBody("*", "*")
+		// Formatting works on the body only; the title is a single line.
+		// These are alt+ combinations because the terminal spends most of the
+		// control range on its own codes: ctrl+i is Tab, ctrl+h is Backspace,
+		// ctrl+m is Enter, ctrl+q and ctrl+s are flow control.
+		if !m.focusTitle {
+			switch msg.String() {
+			case "alt+i":
+				m.markBody("*", "*")
+				return m, nil
+			case "alt+s":
+				m.markBody("~~", "~~")
+				return m, nil
+			case "alt+c":
+				m.markBody("`", "`")
+				return m, nil
+			case "alt+h":
+				m.applyLine(heading)
+				return m, nil
+			case "alt+q":
+				m.applyLine(quote)
+				return m, nil
+			case "alt+8":
+				m.applyLine(bullet)
+				return m, nil
+			case "alt+7":
+				m.applyLine(numbered)
+				return m, nil
+			case "alt+t":
+				m.applyLine(task)
+				return m, nil
+			case "alt+x":
+				m.applyLine(toggleTick)
+				return m, nil
+			case "alt+r":
+				m.applyLine(rule)
+				return m, nil
+			case "alt+f":
+				m.applyLine(codeBlock)
+				return m, nil
+			}
+		}
+		// An alt+key that reached here is not a formatting action. Swallow it
+		// rather than letting the field insert the bare rune, which would type
+		// an "8" for alt+8.
+		if msg.Alt && msg.Type == tea.KeyRunes {
 			return m, nil
 		}
+
 		switch msg.Type {
 		case tea.KeyCtrlB:
 			if !m.focusTitle {
@@ -165,6 +208,14 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, flash("Discarded")
 		case tea.KeyCtrlE:
 			return m, m.externalEdit()
+		case tea.KeyCtrlP:
+			// Preview what is being written, the Write/Preview pair the web
+			// editor has. The draft is rendered, not the saved note.
+			m.previewDraft = !m.previewDraft
+			if m.previewDraft {
+				m.renderDraft()
+			}
+			return m, nil
 		case tea.KeyTab:
 			m.focusTitle = !m.focusTitle
 			if m.focusTitle {

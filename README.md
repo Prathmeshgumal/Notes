@@ -58,9 +58,10 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 | `?` | Full help |
 | `q` | Quit |
 
-While editing: `ctrl+s` saves, `esc` discards, `tab` switches between title and
-body, `ctrl+b` bolds, `alt+i` italicises, `ctrl+k` makes a link, and `ctrl+e`
-hands the note to your `$EDITOR`.
+While editing: `ctrl+s` saves, `ctrl+p` previews, `esc` discards, `tab` switches
+between title and body, and `ctrl+e` hands the note to your `$EDITOR`. The full
+set of formatting keys — bold, italic, strikethrough, code, headings, the three
+list types, quotes and rules — is in `?`.
 
 Leave the title blank and the first line becomes it, the way GitHub Gists work.
 
