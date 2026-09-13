@@ -28,8 +28,10 @@ import (
 // rest of the screen. Narrower than the old full-height sidebar, which is where
 // the extra room for the note comes from.
 const (
-	asideWidth    = 26
-	asideListRows = 9 // rows of titles before the box gives way to note details
+	asideWidth = 26
+	// What is known about the note is a fixed three lines, so it takes a small
+	// box at the top and the list of notes gets everything below it.
+	asideDetailRows = 3
 )
 
 type model struct {

@@ -61,28 +61,24 @@ func (m model) listView() string {
 		Height(inner).
 		Render(titleStyle.Render(truncate(header, previewWidth-4)) + "\n" + scrolled)
 
-	// The right-hand column: the list of notes in a box at the top, and what is
-	// known about the selected one underneath, so the corner is not dead space.
-	listRows := min(asideListRows, inner-6)
+	// The right-hand column: a small box of facts about the note being read,
+	// and the list of notes filling everything beneath it.
+	listRows := inner - asideDetailRows - 2
 	if listRows < 3 {
 		listRows = 3
 	}
-	detailRows := inner - listRows - 2
-	if detailRows < 1 {
-		detailRows = 1
-	}
+
+	details := paneStyle.
+		Width(asideWidth).
+		Height(asideDetailRows).
+		Render(m.asideDetails())
 
 	list := paneStyle.
 		Width(asideWidth).
 		Height(listRows).
 		Render(m.asideList(listRows))
 
-	details := paneStyle.
-		Width(asideWidth).
-		Height(detailRows).
-		Render(m.asideDetails())
-
-	aside := lipgloss.JoinVertical(lipgloss.Left, list, details)
+	aside := lipgloss.JoinVertical(lipgloss.Left, details, list)
 	body := lipgloss.JoinHorizontal(lipgloss.Top, note, aside)
 
 	if m.mode == modeSearch {
@@ -129,30 +125,30 @@ func (m model) asideList(rows int) string {
 	return b.String()
 }
 
-// asideDetails fills the corner below the list with what is worth knowing about
-// the note being read.
+// asideDetails is the small box at the top of the right-hand column: three
+// lines of fact about the note being read, each a label and a value.
 func (m model) asideDetails() string {
 	n := m.selected()
 	if n == nil {
 		return dimStyle.Render("Nothing selected.")
 	}
 
-	words := len(strings.Fields(n.Content))
-	done, total := countTasks(n.Content)
-	lines := strings.Count(n.Content, "\n") + 1
-
-	var b strings.Builder
-	b.WriteString(dimStyle.Render("Edited") + "\n")
-	b.WriteString(relativeTime(n.UpdatedAt) + "\n\n")
-
-	if total > 0 {
-		b.WriteString(dimStyle.Render("Tasks") + "\n")
-		b.WriteString(fmt.Sprintf("%d of %d done", done, total) + "\n\n")
+	row := func(label, value string) string {
+		return dimStyle.Render(fmt.Sprintf("%-7s", label)) + " " +
+			truncate(value, asideWidth-12)
 	}
 
-	b.WriteString(dimStyle.Render("Length") + "\n")
-	b.WriteString(fmt.Sprintf("%d words · %d lines", words, lines))
-	return b.String()
+	tasks := "none"
+	if done, total := countTasks(n.Content); total > 0 {
+		tasks = fmt.Sprintf("%d of %d done", done, total)
+	}
+
+	words := len(strings.Fields(n.Content))
+	return strings.Join([]string{
+		row("Edited", relativeTime(n.UpdatedAt)),
+		row("Tasks", tasks),
+		row("Length", fmt.Sprintf("%d words", words)),
+	}, "\n")
 }
 
 func (m model) editView() string {

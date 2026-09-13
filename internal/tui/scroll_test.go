@@ -298,6 +298,23 @@ func TestAsideLayout(t *testing.T) {
 			t.Errorf("the details box is missing %q:\n%s", want, view)
 		}
 	}
+
+	// The facts sit above the list, not below it.
+	factsRow, listRow := -1, -1
+	for i, l := range lines {
+		if strings.Contains(l, "Edited") && factsRow < 0 {
+			factsRow = i
+		}
+		if strings.Contains(l, "Notes (") && listRow < 0 {
+			listRow = i
+		}
+	}
+	if factsRow < 0 || listRow < 0 {
+		t.Fatalf("could not find both right-hand boxes:\n%s", view)
+	}
+	if factsRow > listRow {
+		t.Errorf("the facts box is below the list (rows %d vs %d)", factsRow, listRow)
+	}
 }
 
 func TestCountTasks(t *testing.T) {
