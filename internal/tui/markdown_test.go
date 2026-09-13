@@ -205,22 +205,50 @@ func TestTableNeedsItsSeparatorRow(t *testing.T) {
 func TestTaskLinesShowBulletThenCheckbox(t *testing.T) {
 	out := renderToPlain(t, "- [x] done\n- [ ] open\n- plain bullet\n")
 
-	for _, want := range []string{"• ☑ done", "• ☐ open", "• plain bullet"} {
+	for _, want := range []string{"• [x] done", "• [ ] open", "• plain bullet"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
 	}
 }
 
-func TestCheckboxesUseBoxGlyphs(t *testing.T) {
+func TestCheckboxesUseAsciiBoxes(t *testing.T) {
 	out := renderToPlain(t, "- [x] done\n- [ ] open\n")
-	if !strings.Contains(out, "☑") {
+	if !strings.Contains(out, "[x] done") {
 		t.Errorf("a completed task should show a ticked box:\n%s", out)
 	}
-	if !strings.Contains(out, "☐") {
+	if !strings.Contains(out, "[ ] open") {
 		t.Errorf("an open task should show an empty box:\n%s", out)
 	}
-	if strings.Contains(out, "[ ]") || strings.Contains(out, "[✓]") {
-		t.Errorf("the bracketed markers should be gone:\n%s", out)
+}
+
+// The tick is coloured so a finished task reads at a glance. glamour renders a
+// task prefix with the surrounding block's style, so the colour has to be
+// carried in the marker itself; this checks it survives rendering.
+func TestTickIsColoured(t *testing.T) {
+	out := renderWithMarkers(t, "- [x] done\n- [ ] open\n")
+	if !strings.Contains(out, tickMark) {
+		t.Errorf("the tick lost its colour in:\n%q", out)
+	}
+	if strings.Contains(stripEscapes(out), "\x1b") {
+		t.Error("an escape leaked into the visible text")
+	}
+}
+
+// A ticked and an unticked box must occupy the same width, or task text will
+// not line up down the list.
+func TestTickedAndUntickedBoxesAreTheSameWidth(t *testing.T) {
+	out := renderToPlain(t, "- [x] done\n- [ ] open\n")
+
+	cols := map[string]int{}
+	for _, line := range strings.Split(out, "\n") {
+		for _, word := range []string{"done", "open"} {
+			if i := strings.Index(line, word); i >= 0 {
+				cols[word] = len([]rune(line[:i]))
+			}
+		}
+	}
+	if cols["done"] != cols["open"] {
+		t.Errorf("task text does not line up: %v", cols)
 	}
 }

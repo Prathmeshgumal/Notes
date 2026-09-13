@@ -80,3 +80,8 @@ func linkifyBareURLs(s string) string {
 func stripMarkers(s string) string {
 	return strings.NewReplacer(linkOpenMarker, "", linkCloseMarker, "").Replace(s)
 }
+
+// tickMark is the "x" inside a finished task's box, in bold green so a
+// completed line is obvious at a glance. It is one printable cell wide, so a
+// ticked and an unticked box occupy the same space.
+const tickMark = "\x1b[1;32mx\x1b[0m"
