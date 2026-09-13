@@ -10,7 +10,8 @@ nothing running in the background.
 [![CI](https://github.com/Prathmeshgumal/Notes/actions/workflows/ci.yml/badge.svg)](https://github.com/Prathmeshgumal/Notes/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.24%2B-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20WSL-lightgrey.svg)](#platforms)
+[![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)](#platforms)
+[![Release](https://img.shields.io/github/v/release/Prathmeshgumal/Notes?color=success)](https://github.com/Prathmeshgumal/Notes/releases/latest)
 
 </div>
 
@@ -37,8 +38,28 @@ leaves nothing running when you quit.
 
 ## Install
 
-You need [Go](https://go.dev/dl) and [Node](https://nodejs.org) **to build it**. Neither is
-needed to run it.
+Download it and run it. Nothing else to install — no Go, no Node, no runtime.
+
+```bash
+curl -L https://github.com/Prathmeshgumal/Notes/releases/latest/download/note-linux-amd64 -o note
+chmod +x note
+./note
+```
+
+To keep it around, put it on your PATH:
+
+```bash
+mv note ~/.local/bin/
+```
+
+On a 64-bit ARM machine — a Pi, an ARM server — use `note-linux-arm64` instead. Every
+release lists a `checksums.txt` you can verify against with `sha256sum -c`.
+
+<details>
+<summary>Building it yourself</summary>
+
+You need [Go](https://go.dev/dl) and [Node](https://nodejs.org) to build, though neither is
+needed to run the result.
 
 ```bash
 git clone https://github.com/Prathmeshgumal/Notes.git
@@ -47,11 +68,7 @@ cd Notes
 cp note ~/.local/bin/
 ```
 
-Then, from anywhere:
-
-```bash
-note
-```
+</details>
 
 <details>
 <summary><code>note: command not found</code></summary>
@@ -68,10 +85,12 @@ The first run leaves you a welcome note to poke at. Delete it whenever you like.
 
 <h3 id="platforms">Platforms</h3>
 
-Developed and tested on Linux. The code has no platform-specific dependencies and
-cross-compiles cleanly for `darwin/arm64`, `darwin/amd64`, `linux/arm64` and
-`windows/amd64` — but I have only run it on Linux, so treat macOS and Windows as
-"should work, untested by me". Reports either way are welcome.
+Releases are built for **Linux**, `amd64` and `arm64`, and that is where the app has been
+developed and used.
+
+The code has no platform-specific dependencies and cross-compiles cleanly for macOS and
+Windows, but I have not run it there, so those builds are not published yet. If you want
+one, build it yourself with `GOOS=darwin ./build.sh` — and tell me how it goes.
 
 ---
 

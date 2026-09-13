@@ -2,6 +2,13 @@
 
 Everything this app can do, and how to do it.
 
+If you have not installed it yet, the quickest way is to download the binary:
+
+```bash
+curl -L https://github.com/Prathmeshgumal/Notes/releases/latest/download/note-linux-amd64 -o note
+chmod +x note && mv note ~/.local/bin/
+```
+
 There are two interfaces over the same notes: a terminal UI (the default) and a
 web UI you start when you want it. Both read and write the same SQLite file, and
 both can be open at once.

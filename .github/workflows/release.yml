@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # build.sh reads the tag with git describe
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Test before releasing anything
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: Build the web UI into the tree
+        run: |
+          npm --prefix client ci --no-fund --no-audit
+          npm --prefix client run build
+          rm -rf internal/web/dist
+          cp -r client/dist internal/web/dist
+
+      - name: Compile for Linux
+        env:
+          # No cgo: the SQLite driver is pure Go, so the binary is fully static
+          # and runs on any Linux regardless of its glibc.
+          CGO_ENABLED: '0'
+        run: |
+          mkdir -p dist
+          VERSION="${GITHUB_REF_NAME}"
+          for arch in amd64 arm64; do
+            GOOS=linux GOARCH="$arch" go build \
+              -ldflags "-s -w -X main.version=${VERSION}" \
+              -o "dist/note-linux-${arch}" .
+          done
+          cd dist && sha256sum note-* > checksums.txt
+          ls -lh
+
+      - name: Check the binary actually runs
+        run: |
+          ./dist/note-linux-amd64 --version
+          file ./dist/note-linux-amd64 | grep -q "statically linked" \
+            || { echo "binary is not static"; exit 1; }
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/note-linux-amd64
+            dist/note-linux-arm64
+            dist/checksums.txt
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            ```bash
+            curl -L https://github.com/Prathmeshgumal/Notes/releases/download/${{ github.ref_name }}/note-linux-amd64 -o note
+            chmod +x note
+            ./note
+            ```
+
+            On a 64-bit ARM machine use `note-linux-arm64` instead.
+
+            To keep it on your PATH:
+
+            ```bash
+            mv note ~/.local/bin/
+            ```
+
+            The binary is fully static — nothing else to install, no Go, no Node,
+            no runtime. Your notes live in `~/.local/share/notes/notes.db`.
+
+            Verify the download against `checksums.txt` with `sha256sum -c`.
