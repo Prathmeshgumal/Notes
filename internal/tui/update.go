@@ -52,6 +52,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.body.SetValue(string(msg))
 		return m, nil
 
+	case tea.MouseMsg:
+		// Clicking positions the caret while editing; the list has nothing to
+		// click, so it is left to the terminal.
+		if m.mode == modeEdit && !m.focusTitle &&
+			msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft {
+			m.clickBody(msg.X, msg.Y)
+		}
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -107,6 +116,23 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmd, m.reload())
 
 	case modeEdit:
+		// ctrl+i is Tab in a terminal, so italic takes alt+i instead.
+		if msg.String() == "alt+i" && !m.focusTitle {
+			m.markBody("*", "*")
+			return m, nil
+		}
+		switch msg.Type {
+		case tea.KeyCtrlB:
+			if !m.focusTitle {
+				m.markBody("**", "**")
+				return m, nil
+			}
+		case tea.KeyCtrlK:
+			if !m.focusTitle {
+				m.linkBody()
+				return m, nil
+			}
+		}
 		switch msg.Type {
 		case tea.KeyCtrlS:
 			return m, m.save()

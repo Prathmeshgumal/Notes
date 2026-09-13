@@ -16,7 +16,7 @@ func (m model) helpLine() string {
 	case modeSearch:
 		return "type to filter   ↵ accept   esc clear"
 	case modeEdit:
-		return "ctrl+s save   tab title/body   ctrl+e $EDITOR   esc cancel"
+		return "ctrl+s save  ctrl+b bold  alt+i italic  ctrl+k link  tab title/body  ctrl+e $EDITOR  esc cancel"
 	case modeConfirm:
 		return "y move to trash   n / esc cancel"
 	case modeHelp:
@@ -38,6 +38,10 @@ const helpText = `
   Writing
     ↵            edit the selected note
     n            new note
+    ctrl+b       bold the word under the cursor (while editing)
+    alt+i        italic — ctrl+i is Tab in a terminal, so alt is used
+    ctrl+k       turn the word into a link
+    click        move the cursor (while editing)
     ctrl+e       open $EDITOR (while editing)
     ctrl+s       save
     esc          cancel

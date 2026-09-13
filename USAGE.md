@@ -62,8 +62,20 @@ While editing:
 | `ctrl+s` | Save and go back to the list |
 | `esc` | Discard changes |
 | `tab` | Switch between the title field and the body |
+| `ctrl+b` | Bold the word under the cursor |
+| `alt+i` | Italic the word under the cursor |
+| `ctrl+k` | Turn the word into a link, cursor ready for the address |
+| click | Move the cursor to where you clicked |
 | `ctrl+e` | Hand the body to `$EDITOR`; save and quit there to come back |
 | `↵` | New line (when the body has focus) |
+
+Formatting keys work on the word under the cursor and toggle off if you press
+them again. `alt+i` carries italic because **`ctrl+i` is Tab** in every
+terminal — they are the same byte — and Tab already switches title and body.
+
+Clicking counts rows from the top of the note, so in a note long enough to
+scroll the caret lands off by however far it has scrolled. Enabling the mouse
+also means the terminal's own text selection needs **shift** held down.
 
 **Titles are optional.** Leave the title blank and the first line of the note
 becomes its title, the way GitHub Gists work. If that first line is also the

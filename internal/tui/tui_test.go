@@ -2,6 +2,7 @@ package tui
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -267,4 +268,142 @@ func titlesOf(notes []store.Note) []string {
 		out[i] = n.Title
 	}
 	return out
+}
+
+// The click-to-position constants describe where editView actually draws the
+// body, so pin them against the rendered view.
+func TestBodyOriginMatchesTheRenderedLayout(t *testing.T) {
+	m, _ := newTestModel(t)
+	m = press(m, tea.WindowSizeMsg{Width: 90, Height: 30})
+	m = press(m, key('n'))
+	for _, r := range "ZQX" {
+		m = press(m, key(r))
+	}
+
+	lines := strings.Split(m.View(), "\n")
+	if bodyOriginY >= len(lines) {
+		t.Fatalf("bodyOriginY %d is past the end of the view (%d lines)", bodyOriginY, len(lines))
+	}
+	row := stripANSI(lines[bodyOriginY])
+	byteIdx := strings.Index(row, "ZQX")
+	if byteIdx < 0 {
+		t.Fatalf("body text is not on row %d; that row is %q", bodyOriginY, row)
+	}
+	// Borders are multi-byte, and a click arrives in cells, so count runes.
+	idx := len([]rune(row[:byteIdx]))
+	if idx != bodyOriginX {
+		t.Errorf("body starts at column %d, but bodyOriginX is %d (row %q)", idx, bodyOriginX, row)
+	}
+}
+
+func TestCtrlBBoldsTheWordUnderTheCursor(t *testing.T) {
+	m, _ := newTestModel(t)
+	m = press(m, tea.WindowSizeMsg{Width: 90, Height: 30})
+	m = press(m, key('n'))
+	for _, r := range "hello" {
+		m = press(m, key(r))
+	}
+	m = press(m, tea.KeyMsg{Type: tea.KeyCtrlB})
+
+	if got := m.body.Value(); got != "**hello**" {
+		t.Errorf("body = %q, want %q", got, "**hello**")
+	}
+}
+
+func TestAltIItalicsTheWord(t *testing.T) {
+	m, _ := newTestModel(t)
+	m = press(m, tea.WindowSizeMsg{Width: 90, Height: 30})
+	m = press(m, key('n'))
+	for _, r := range "hello" {
+		m = press(m, key(r))
+	}
+	m = press(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'i'}, Alt: true})
+
+	if got := m.body.Value(); got != "*hello*" {
+		t.Errorf("body = %q, want %q", got, "*hello*")
+	}
+}
+
+func TestCtrlKMakesALink(t *testing.T) {
+	m, _ := newTestModel(t)
+	m = press(m, tea.WindowSizeMsg{Width: 90, Height: 30})
+	m = press(m, key('n'))
+	for _, r := range "docs" {
+		m = press(m, key(r))
+	}
+	m = press(m, tea.KeyMsg{Type: tea.KeyCtrlK})
+
+	if got := m.body.Value(); got != "[docs]()" {
+		t.Errorf("body = %q, want %q", got, "[docs]()")
+	}
+	// Typing continues inside the parentheses.
+	for _, r := range "https://x.test" {
+		m = press(m, key(r))
+	}
+	if got := m.body.Value(); got != "[docs](https://x.test)" {
+		t.Errorf("typing after ctrl+k gave %q", got)
+	}
+}
+
+// The title field is a single line; formatting keys there would be noise.
+func TestFormattingKeysAreIgnoredInTheTitle(t *testing.T) {
+	m, _ := newTestModel(t)
+	m = press(m, tea.WindowSizeMsg{Width: 90, Height: 30})
+	m = press(m, key('n'))
+	m = press(m, tea.KeyMsg{Type: tea.KeyTab}) // focus the title
+	for _, r := range "plain" {
+		m = press(m, key(r))
+	}
+	m = press(m, tea.KeyMsg{Type: tea.KeyCtrlB})
+
+	if got := m.title.Value(); got != "plain" {
+		t.Errorf("title = %q, want it untouched", got)
+	}
+}
+
+func TestClickMovesTheCursor(t *testing.T) {
+	m, _ := newTestModel(t)
+	m = press(m, tea.WindowSizeMsg{Width: 90, Height: 30})
+	m = press(m, key('n'))
+	for _, r := range "first line" {
+		m = press(m, key(r))
+	}
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnter})
+	for _, r := range "second line" {
+		m = press(m, key(r))
+	}
+
+	// Click on the first row, column 3 of the text.
+	m = press(m, tea.MouseMsg{
+		X: bodyOriginX + 3, Y: bodyOriginY,
+		Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
+	})
+	if got := m.bodyCursor(); got != 3 {
+		t.Errorf("cursor offset = %d, want 3 (row 0, column 3)", got)
+	}
+
+	// Typing now lands where it was clicked, not at the end.
+	m = press(m, key('X'))
+	if got := m.body.Value(); got != "firXst line\nsecond line" {
+		t.Errorf("typed at the wrong place: %q", got)
+	}
+}
+
+func stripANSI(s string) string {
+	var b strings.Builder
+	esc := false
+	for _, r := range s {
+		if r == 0x1b {
+			esc = true
+			continue
+		}
+		if esc {
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+				esc = false
+			}
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }

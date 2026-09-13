@@ -244,6 +244,74 @@ func (m *model) startEdit(n *store.Note) {
 	m.body.CursorEnd()
 }
 
+// The body pane's top-left character, in screen coordinates. editView draws a
+// title line, then the title box with its border, then the body box: its
+// border, then the textarea's own two-column prompt. A test pins these against
+// the rendered view so a layout change cannot quietly break clicking.
+const (
+	bodyOriginY = 5
+	bodyOriginX = 3
+)
+
+// bodyCursor is where the caret sits as an offset into the whole note.
+func (m *model) bodyCursor() int {
+	li := m.body.LineInfo()
+	return offsetAt(m.body.Value(), m.body.Line(), li.StartColumn+li.ColumnOffset)
+}
+
+// placeBodyCursor walks the caret to a logical row and column. The textarea
+// exposes no way to jump, so it is moved a line at a time from the top.
+func (m *model) placeBodyCursor(row, col int) {
+	for i := 0; i < 5000; i++ {
+		if m.body.Line() == 0 && m.body.LineInfo().RowOffset == 0 {
+			break
+		}
+		m.body.CursorUp()
+	}
+	m.body.CursorStart()
+	for i := 0; i < 5000 && m.body.Line() < row; i++ {
+		m.body.CursorDown()
+	}
+	m.body.SetCursor(col)
+}
+
+// clickBody moves the caret to a clicked cell. Rows are counted from the top of
+// the note, so a note scrolled past the pane will land off by the scrolled
+// amount; short notes, which is nearly all of them, are exact.
+func (m *model) clickBody(x, y int) {
+	row, col := y-bodyOriginY, x-bodyOriginX
+	if row < 0 || col < 0 {
+		return
+	}
+	for i := 0; i < 5000; i++ {
+		if m.body.Line() == 0 && m.body.LineInfo().RowOffset == 0 {
+			break
+		}
+		m.body.CursorUp()
+	}
+	m.body.CursorStart()
+	for i := 0; i < row; i++ {
+		m.body.CursorDown()
+	}
+	li := m.body.LineInfo()
+	m.body.SetCursor(li.StartColumn + col)
+}
+
+// markBody applies Markdown emphasis around the word under the caret.
+func (m *model) markBody(open, close string) {
+	value, pos := mark(m.body.Value(), m.bodyCursor(), open, close)
+	m.body.SetValue(value)
+	row, col := rowColAt(value, pos)
+	m.placeBodyCursor(row, col)
+}
+
+func (m *model) linkBody() {
+	value, pos := link(m.body.Value(), m.bodyCursor())
+	m.body.SetValue(value)
+	row, col := rowColAt(value, pos)
+	m.placeBodyCursor(row, col)
+}
+
 func (m *model) save() tea.Cmd {
 	title, content := m.title.Value(), m.body.Value()
 	if strings.TrimSpace(title) == "" && strings.TrimSpace(content) == "" {
