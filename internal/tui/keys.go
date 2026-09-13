@@ -41,7 +41,6 @@ const helpText = `
     ctrl+b       bold the word under the cursor (while editing)
     alt+i        italic — ctrl+i is Tab in a terminal, so alt is used
     ctrl+k       turn the word into a link
-    click        move the cursor (while editing)
     ctrl+e       open $EDITOR (while editing)
     ctrl+s       save
     esc          cancel

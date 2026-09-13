@@ -52,15 +52,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.body.SetValue(string(msg))
 		return m, nil
 
-	case tea.MouseMsg:
-		// Clicking positions the caret while editing; the list has nothing to
-		// click, so it is left to the terminal.
-		if m.mode == modeEdit && !m.focusTitle &&
-			msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft {
-			m.clickBody(msg.X, msg.Y)
-		}
-		return m, nil
-
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}

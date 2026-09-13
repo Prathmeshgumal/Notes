@@ -244,15 +244,6 @@ func (m *model) startEdit(n *store.Note) {
 	m.body.CursorEnd()
 }
 
-// The body pane's top-left character, in screen coordinates. editView draws a
-// title line, then the title box with its border, then the body box: its
-// border, then the textarea's own two-column prompt. A test pins these against
-// the rendered view so a layout change cannot quietly break clicking.
-const (
-	bodyOriginY = 5
-	bodyOriginX = 3
-)
-
 // bodyCursor is where the caret sits as an offset into the whole note.
 func (m *model) bodyCursor() int {
 	li := m.body.LineInfo()
@@ -273,28 +264,6 @@ func (m *model) placeBodyCursor(row, col int) {
 		m.body.CursorDown()
 	}
 	m.body.SetCursor(col)
-}
-
-// clickBody moves the caret to a clicked cell. Rows are counted from the top of
-// the note, so a note scrolled past the pane will land off by the scrolled
-// amount; short notes, which is nearly all of them, are exact.
-func (m *model) clickBody(x, y int) {
-	row, col := y-bodyOriginY, x-bodyOriginX
-	if row < 0 || col < 0 {
-		return
-	}
-	for i := 0; i < 5000; i++ {
-		if m.body.Line() == 0 && m.body.LineInfo().RowOffset == 0 {
-			break
-		}
-		m.body.CursorUp()
-	}
-	m.body.CursorStart()
-	for i := 0; i < row; i++ {
-		m.body.CursorDown()
-	}
-	li := m.body.LineInfo()
-	m.body.SetCursor(li.StartColumn + col)
 }
 
 // markBody applies Markdown emphasis around the word under the caret.
