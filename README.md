@@ -150,9 +150,27 @@ say so; quitting takes it to nothing at all, because there is nothing left runni
 code, headings, quotes, tables, and task lists with real checkboxes. Leave the title blank
 and the first line becomes it, the way Gists work.
 
+**Lists carry on by themselves.** Press `↵` at the end of a list item and the next one is
+waiting for you:
+
+```
+- [ ] buy milk     ↵ →  - [ ]        a new task, unticked
+- buy milk         ↵ →  -
+1. first           ↵ →  2.           and it keeps counting
+> a thought        ↵ →  >
+```
+
+Indentation is kept, so a nested item stays nested. Press `↵` again on the empty item to
+drop the marker and finish the list, or `alt+↵` for a line break that leaves the list
+alone.
+
 **Keyboard first, lazygit style.** `j`/`k` to move, `↵` to edit, `n` for a new note, `/` to
 search, `?` for everything else. Formatting has keys too: bold, italic, strikethrough,
 code, headings, three kinds of list, quotes and rules.
+
+**Copy what you need.** `R` shows the note's Markdown full-screen with no borders, so a
+mouse selection is the text and nothing else — no box-drawing characters, no padding.
+Your terminal does the copying, so it works the same everywhere.
 
 **Links behave like links.** The preview shows the link text, not the URL. Ctrl+click it,
 or press `o`.

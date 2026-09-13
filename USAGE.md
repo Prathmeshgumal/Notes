@@ -63,31 +63,20 @@ notes — use `j` and `k` for that.
 
 | Key | Does |
 | --- | --- |
-| `y` | Copy the note's Markdown to the clipboard |
 | `R` | Show the Markdown source full-screen, to select with the mouse |
-| `ctrl+y` | Copy what you are writing, while editing |
 
-`y` copies the raw Markdown, not the rendered text, so it pastes cleanly into
-anything that understands Markdown.
+Press `R` and the note's Markdown fills the screen with no borders, no padding
+and no scrollbar, so dragging over it selects the text and nothing else. Copy
+with your terminal's own shortcut — **`Ctrl+Shift+C`** in GNOME Terminal and
+most Linux terminals, `Cmd+C` on macOS. `esc` goes back.
 
-It tries two routes, because neither works everywhere: a clipboard tool
-(`xclip`, `wl-copy` or `pbcopy`) if one is installed, and the terminal's own
-clipboard escape, which needs no tools and works over SSH. The status line says
-which one carried it.
-
-**To copy part of a note**, press `R`. It shows the Markdown source
-full-screen with no borders, no padding and no scrollbar, so dragging over it
-selects the note's text and nothing else. Copy with your terminal's own
-shortcut — `Ctrl+Shift+C` in GNOME Terminal and most Linux terminals, `Cmd+C`
-on macOS. `esc` goes back.
+You choose what to copy, which a key that copies the whole note cannot do, and
+it works everywhere because it is your terminal doing the copying rather than
+the app asking for a clipboard it may not be able to reach.
 
 The app never captures the mouse, so selection always belongs to your terminal.
-The reason `R` exists is that the normal view draws borders around the text,
-and a selection would carry those along with it.
-
-For `y` to use the system clipboard directly rather than the terminal escape,
-install a clipboard tool — `sudo apt install wl-clipboard` on Wayland, or
-`xclip` on X11.
+The reason `R` exists at all is that the normal view draws borders around the
+text, and a selection there would carry those along with it.
 
 Notes are listed **most recently edited first**, so whatever you last worked on
 is at the top. Saving a note moves it to the top, and your selection follows it

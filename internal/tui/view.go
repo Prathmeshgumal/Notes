@@ -178,7 +178,7 @@ func (m model) helpView() string {
 	return paneStyle.
 		Width(m.width-4).
 		Height(m.height-4).
-		Render(helpText) + "\n" + helpStyle.Render(" "+m.helpLine())
+		Render(m.help.View()) + "\n" + helpStyle.Render(" "+m.helpLine())
 }
 
 func min(a, b int) int {

@@ -25,13 +25,13 @@ func (m model) helpLine() string {
 	case modeConfirm:
 		return "y confirm   n / esc cancel"
 	case modeRaw:
-		return "select with the mouse to copy   ↑/↓ scroll   y copy it all   esc back"
+		return "select with the mouse, then ctrl+shift+c   ↑/↓ scroll   esc back"
 	case modeTrash:
 		return "j/k move   ↵ restore   d delete for good   E empty trash   esc back"
 	case modeHelp:
-		return "any key to close"
+		return "↑/↓ scroll   esc close"
 	default:
-		return "j/k note  ↑/↓ scroll  ↵ edit  n new  / search  y copy  o link  d trash  w web  ? help  q quit"
+		return "j/k note  ↑/↓ scroll  ↵ edit  n new  / search  R source  o link  d trash  w web  ? help  q quit"
 	}
 }
 
@@ -51,22 +51,37 @@ const helpText = `
     home / end   jump to the top / bottom
 
   Copying
-    y            copy the note's Markdown to the clipboard
-    R            show the Markdown source full-screen, with no borders, so a
-                 mouse selection copies clean Markdown and nothing else
-    ctrl+y       copy while editing
+    R            the Markdown source, full-screen and borderless. Select it
+                 with the mouse and copy the way you always do — ctrl+shift+c
+                 in most Linux terminals, cmd+c on a Mac.
 
   Writing
-    ↵            edit the selected note
     n            new note
-    ↵            new line — inside a list it starts the next item
-                 press it on an empty item to end the list
-    alt+↵        a plain line break, without continuing the list
-    ctrl+s       save
-    ctrl+p       preview what you are writing
-    tab          switch between the title and the body
-    ctrl+e       open $EDITOR
-    esc          cancel
+    ↵            edit the selected note
+    e            edit it straight in $EDITOR
+
+  While editing
+    ctrl+s       save                  tab      switch title / body
+    ctrl+p       preview the draft     ctrl+e   hand it to $EDITOR
+    esc          discard
+
+  Lists carry on by themselves
+    ↵            at the end of a list item, starts the next one:
+
+                   - [ ] buy milk   ↵   →   - [ ]
+                   - [x] buy milk   ↵   →   - [ ]   (new tasks start unticked)
+                   - buy milk       ↵   →   -
+                   1. first         ↵   →   2.      (and keeps counting)
+                   > a thought      ↵   →   >
+
+                 indentation is kept, so a nested item stays nested
+
+    ↵ again      on the empty item it just made, removes the marker —
+                 that is how a list is finished
+
+    alt+↵        a plain line break, leaving the list alone. Shift+Enter
+                 cannot do this: a terminal sends the same byte for it as
+                 for Enter, so no program inside one can tell them apart
 
   Formatting, while editing the body
     ctrl+b       bold          alt+l    bulleted list
@@ -79,8 +94,8 @@ const helpText = `
 
     Most are alt+ because a terminal spends the control range on its own
     codes: ctrl+i is Tab, ctrl+h is Backspace, ctrl+m is Enter. They are
-    letters rather than digits because terminals bind alt+1..9 to switching
-    tabs, so a digit never reaches a program running inside one.
+    letters not digits because terminals bind alt+1..9 to switching tabs,
+    so a digit never reaches a program running inside one.
 
   Other
     o            open a link from this note (again for the next one)
@@ -88,7 +103,7 @@ const helpText = `
     d            move to trash (asks first)
     u            undo the last delete (again for the one before it)
     T            the trash — restore anything deleted in the last 30 days
-                 inside it: ↵ restore, d delete for good, E empty the trash
+                 in it: ↵ restore, d delete for good, E empty it
     w            start the web UI and open a browser
     r            reload from disk
     ?            this help

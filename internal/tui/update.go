@@ -127,15 +127,30 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.rawView.GotoTop()
 		case "end", "G":
 			m.rawView.GotoBottom()
-		case "y":
-			if n := m.selected(); n != nil {
-				return m, flash(copyToClipboard(n.Content))
-			}
 		}
 		return m, nil
 
 	case modeHelp:
-		m.mode = modeList
+		switch msg.String() {
+		case "down", "j":
+			m.help.LineDown(1)
+		case "up", "k":
+			m.help.LineUp(1)
+		case "pgdown", " ":
+			m.help.ViewDown()
+		case "pgup", "b":
+			m.help.ViewUp()
+		case "ctrl+d":
+			m.help.HalfViewDown()
+		case "ctrl+u":
+			m.help.HalfViewUp()
+		case "home", "g":
+			m.help.GotoTop()
+		case "end", "G":
+			m.help.GotoBottom()
+		default:
+			m.mode = modeList
+		}
 		return m, nil
 
 	case modeConfirm:
@@ -250,8 +265,6 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, flash("Discarded")
 		case tea.KeyCtrlE:
 			return m, m.externalEdit()
-		case tea.KeyCtrlY:
-			return m, flash(copyToClipboard(m.body.Value()))
 		case tea.KeyCtrlP:
 			// Preview what is being written, the Write/Preview pair the web
 			// editor has. The draft is rendered, not the saved note.
@@ -315,10 +328,6 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "end":
 		m.preview.GotoBottom()
 
-	case "y":
-		if n := m.selected(); n != nil {
-			return m, flash(copyToClipboard(n.Content))
-		}
 	case "R":
 		if n := m.selected(); n != nil {
 			m.mode = modeRaw
@@ -358,6 +367,8 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(m.reload(), flash("Reloaded"))
 	case "?":
 		m.mode = modeHelp
+		m.help.SetContent(helpText)
+		m.help.GotoTop()
 	}
 	return m, nil
 }

@@ -45,6 +45,7 @@ type model struct {
 	previewDraft bool // showing the draft rendered, rather than its source
 	draft        viewport.Model
 	rawView      viewport.Model // full-screen Markdown source, for selecting
+	help         viewport.Model // the key list, which is longer than a screen
 
 	server *web.Server
 	status string
@@ -124,6 +125,7 @@ func New(st *store.Store) model {
 		preview:      viewport.New(0, 0),
 		draft:        viewport.New(0, 0),
 		rawView:      viewport.New(0, 0),
+		help:         viewport.New(0, 0),
 		mode:         modeList,
 		// Sensible defaults so the first frame renders even if the terminal
 		// never reports its size; WindowSizeMsg overrides these.
@@ -197,6 +199,11 @@ func (m *model) layout() {
 	// else. One line is left for the hint along the bottom.
 	m.rawView.Width = m.width
 	m.rawView.Height = m.height - 1
+
+	// The key list is longer than any terminal, so it scrolls.
+	m.help.Width = m.width - 4
+	m.help.Height = m.height - 4
+	m.help.SetContent(helpText)
 
 	m.title.Width = m.width - 6
 	m.body.SetWidth(m.width - 6)

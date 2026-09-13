@@ -207,3 +207,58 @@ func TestScrollbarIsAppendedToEveryLine(t *testing.T) {
 		}
 	}
 }
+
+// The key list outgrew a screen, so it has to scroll — and a keystroke meant
+// for scrolling must not close it.
+func TestHelpScrolls(t *testing.T) {
+	m, _ := newTestModel(t)
+	m = press(m, tea.WindowSizeMsg{Width: 90, Height: 24})
+	m = press(m, key('?'))
+	if m.mode != modeHelp {
+		t.Fatalf("? did not open the help, mode = %v", m.mode)
+	}
+	if m.help.TotalLineCount() <= m.help.Height {
+		t.Fatal("the help now fits on screen; this test is no longer meaningful")
+	}
+
+	top := stripANSI(m.View())
+	if !strings.Contains(top, "Choosing a note") {
+		t.Errorf("the help does not start at the top:\n%s", top)
+	}
+
+	for i := 0; i < 10; i++ {
+		m = press(m, tea.KeyMsg{Type: tea.KeyDown})
+	}
+	if m.mode != modeHelp {
+		t.Fatal("scrolling closed the help")
+	}
+	if m.help.YOffset != 10 {
+		t.Errorf("scrolled %d lines, want 10", m.help.YOffset)
+	}
+
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnd})
+	if !strings.Contains(stripANSI(m.View()), "quit") {
+		t.Error("the end of the help is not reachable")
+	}
+
+	m = press(m, tea.KeyMsg{Type: tea.KeyEsc})
+	if m.mode != modeList {
+		t.Error("esc did not close the help")
+	}
+}
+
+// Everything the app binds should be findable in the help.
+func TestHelpMentionsTheListBehaviour(t *testing.T) {
+	for _, want := range []string{
+		"Lists carry on by themselves",
+		"- [ ] buy milk",
+		"keeps counting",
+		"removes the marker",
+		"alt+↵",
+		"Shift+Enter",
+	} {
+		if !strings.Contains(helpText, want) {
+			t.Errorf("the help does not mention %q", want)
+		}
+	}
+}
