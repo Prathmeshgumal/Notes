@@ -9,7 +9,7 @@ var (
 	// [text](https://example.com "optional title") and the image form.
 	inlineLink = regexp.MustCompile(`(!?\[[^\]]*\])\(\s*([^()\s]+)(\s+"[^"]*")?\s*\)`)
 	// A URL written on its own, which the renderer turns into a link anyway.
-	bareURL = regexp.MustCompile(`https?://[^\s<>()\[\]"']+`)
+	bareURL = regexp.MustCompile(`https?://[^\s<>()\[\]"'\x00-\x1f]+`)
 )
 
 // eachLineOutsideCode applies fn to every line that is not inside a fenced
@@ -41,6 +41,24 @@ func hideLinkTargets(md string) string {
 	return eachLineOutsideCode(md, func(line string) string {
 		return inlineLink.ReplaceAllString(line, "$1(#)")
 	})
+}
+
+// OrderedTargets returns the destination of every inline link in a note, in the
+// order the links appear. Images are excluded because the renderer styles them
+// differently, and entries line up one-to-one with the markers in the rendered
+// output so each run of link text can be paired with its destination.
+func OrderedTargets(md string) []string {
+	var out []string
+	eachLineOutsideCode(md, func(line string) string {
+		for _, m := range inlineLink.FindAllStringSubmatch(line, -1) {
+			if strings.HasPrefix(m[1], "!") {
+				continue // an image, not a link
+			}
+			out = append(out, m[2])
+		}
+		return line
+	})
+	return out
 }
 
 // Links returns every destination in a note, in the order they appear, so the

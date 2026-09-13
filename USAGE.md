@@ -89,11 +89,18 @@ Search matches both titles and note bodies, and ignores case.
 | `o` | Open a link from this note in your browser |
 
 Write links as `[some text](https://example.com)`. The preview shows only
-*some text* — the URL stays hidden, like it would in a browser. Since a terminal
-can't click, `o` opens it. If the note has several links, press `o` again to
-open the next one; the status line tells you which one it opened.
+*some text* — the URL stays hidden, like it would in a browser.
 
-Bare URLs written on their own count too. Links inside code blocks are ignored.
+**Ctrl+click the text to open it.** The preview emits real terminal hyperlinks
+(OSC 8), so the link text is clickable in GNOME Terminal, iTerm2, kitty,
+WezTerm, Windows Terminal and most other modern terminals.
+
+`o` does the same thing from the keyboard, and is the fallback in a terminal
+that doesn't support hyperlinks. If the note has several links, press `o` again
+for the next one; the status line names the one it opened.
+
+URLs written out in full are clickable as well — they have no text to hide
+behind, so they stay visible. Link syntax inside a code block stays literal.
 
 ### Deleting, and undoing it
 

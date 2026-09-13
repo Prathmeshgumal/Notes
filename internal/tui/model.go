@@ -15,6 +15,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/ansi"
+	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/prathmesh/notes/internal/store"
@@ -177,7 +179,7 @@ func (m *model) renderPreview() {
 
 	if m.renderer == nil || m.rendererWidth != width {
 		r, err := glamour.NewTermRenderer(
-			glamour.WithStandardStyle(m.glamourStyle),
+			glamour.WithStyles(markedUpStyle(m.glamourStyle)),
 			glamour.WithWordWrap(width-2),
 		)
 		if err != nil {
@@ -190,15 +192,29 @@ func (m *model) renderPreview() {
 		m.rendered = map[string]string{}
 	}
 
-	body := hideLinkTargets(stripDerivedTitle(n.Content, n.Title))
-	out, err := m.renderer.Render(separateListGroups(body))
+	body := stripDerivedTitle(n.Content, n.Title)
+	out, err := m.renderer.Render(separateListGroups(hideLinkTargets(body)))
 	if err != nil {
 		m.preview.SetContent(n.Content)
 		return
 	}
+	// Wrap the tagged link text now that the layout is already measured.
+	out = linkifyRendered(out, OrderedTargets(body))
 	m.rendered[n.ID+"\x00"+n.UpdatedAt] = out
 	m.preview.SetContent(out)
 	m.preview.GotoTop()
+}
+
+// markedUpStyle is the renderer's own style with link text tagged, so the
+// clickable escapes can be wrapped around it once rendering is done.
+func markedUpStyle(name string) ansi.StyleConfig {
+	cfg := styles.DarkStyleConfig
+	if name == "light" {
+		cfg = styles.LightStyleConfig
+	}
+	cfg.LinkText.Prefix = linkOpenMarker
+	cfg.LinkText.Suffix = linkCloseMarker
+	return cfg
 }
 
 func (m *model) startEdit(n *store.Note) {

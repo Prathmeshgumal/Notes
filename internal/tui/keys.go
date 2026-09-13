@@ -44,6 +44,7 @@ const helpText = `
 
   Other
     o            open a link from this note (again for the next one)
+                 ctrl+click the link text works too
     d            move to trash (asks first)
     u            undo the last delete
     w            start the web UI and open a browser

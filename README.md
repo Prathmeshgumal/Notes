@@ -50,7 +50,7 @@ See **[USAGE.md](./USAGE.md)** for the full reference.
 | `↵` | edit the selected note |
 | `n` | new note |
 | `/` | search titles and bodies, `esc` clears |
-| `o` | open a link from the note (again for the next) |
+| `o` | open a link from the note (ctrl+click works too) |
 | `d` | move to trash, asks first |
 | `u` | undo the last delete |
 | `w` | start the web UI and open a browser |

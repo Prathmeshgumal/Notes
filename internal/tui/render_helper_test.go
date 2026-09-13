@@ -64,3 +64,21 @@ func renderToPlain(t *testing.T, md string) string {
 	}
 	return ansiCodes.ReplaceAllString(out, "")
 }
+
+// renderWithMarkers renders through the same marker-tagged style the preview
+// uses, so link text can be located afterwards.
+func renderWithMarkers(t *testing.T, md string) string {
+	t.Helper()
+	r, err := glamour.NewTermRenderer(
+		glamour.WithStyles(markedUpStyle("dark")),
+		glamour.WithWordWrap(70),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := r.Render(md)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
