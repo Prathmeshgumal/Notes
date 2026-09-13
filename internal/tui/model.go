@@ -399,6 +399,26 @@ func (m *model) applyLine(fn func(string, int) (string, int)) {
 	m.replaceCurrentLine(next, pos)
 }
 
+// newLine handles Enter in the body: inside a list it carries the list on, and
+// on an item with nothing in it the marker is cleared instead, ending the list.
+// Anywhere else it is an ordinary line break.
+func (m *model) newLine() {
+	line, _ := m.currentLine()
+	prefix, endList := continuation(line)
+
+	if endList {
+		// The writer pressed Enter on an empty item: drop the marker and leave
+		// them on a blank line, rather than adding another empty item.
+		m.replaceCurrentLine("", 0)
+		return
+	}
+
+	m.body, _ = m.body.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if prefix != "" {
+		m.body.InsertString(prefix)
+	}
+}
+
 func (m *model) linkBody() {
 	line, col := m.currentLine()
 	next, pos := link(line, col)

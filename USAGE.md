@@ -123,10 +123,32 @@ While editing:
 | `alt+x` | Tick or untick the task under the cursor |
 | `alt+r` | Horizontal rule |
 | `ctrl+e` | Hand the body to `$EDITOR`; save and quit there to come back |
-| `↵` | New line (when the body has focus) |
+| `↵` | New line — inside a list it starts the next item |
+| `alt+↵` | A plain line break, without continuing the list |
 
 Notes are not limited in length. Paste a whole Markdown file in and keep
 editing it.
+
+### Lists carry on by themselves
+
+Press `↵` at the end of a list item and the next one starts for you:
+
+| You have | `↵` gives you |
+| --- | --- |
+| `- [ ] buy milk` | `- [ ] ` |
+| `- [x] buy milk` | `- [ ] ` — a new task starts unticked |
+| `- buy milk` | `- ` |
+| `1. first` | `2. ` — and keeps counting |
+| `> a thought` | `> ` |
+
+Indentation is kept, so a nested item stays nested.
+
+**To finish a list**, press `↵` again on the empty item it just made: the
+marker is removed and you are left on a plain line.
+
+**For a line break inside an item**, use `alt+↵`. Shift+Enter would be the
+obvious choice, but a terminal sends the very same byte for it as for Enter —
+they are literally indistinguishable to any program running inside one.
 
 `ctrl+b`, `alt+i`, `alt+s`, `alt+c` and `ctrl+k` act on the word under the
 cursor; the rest act on the line. All of them toggle off if you press them

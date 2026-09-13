@@ -59,6 +59,9 @@ const helpText = `
   Writing
     ↵            edit the selected note
     n            new note
+    ↵            new line — inside a list it starts the next item
+                 press it on an empty item to end the list
+    alt+↵        a plain line break, without continuing the list
     ctrl+s       save
     ctrl+p       preview what you are writing
     tab          switch between the title and the body

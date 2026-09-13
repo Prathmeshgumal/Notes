@@ -228,6 +228,18 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 		}
 		switch msg.Type {
+		case tea.KeyEnter:
+			if !m.focusTitle {
+				if msg.Alt {
+					// alt+enter is the way out of a list without ending it.
+					// shift+enter cannot be used: a terminal sends the same
+					// byte for it as for Enter, so the two are the same key.
+					m.body, _ = m.body.Update(tea.KeyMsg{Type: tea.KeyEnter})
+				} else {
+					m.newLine()
+				}
+				return m, nil
+			}
 		case tea.KeyCtrlS:
 			return m, m.save()
 		case tea.KeyEsc:
