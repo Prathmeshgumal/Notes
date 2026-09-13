@@ -39,6 +39,8 @@ Then, from anywhere:
 note
 ```
 
+See **[USAGE.md](./USAGE.md)** for the full reference.
+
 ## Keys
 
 | Key | Does |
