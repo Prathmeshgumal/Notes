@@ -48,7 +48,8 @@ notes
 | `↵` | edit the selected note |
 | `n` | new note |
 | `/` | search titles and bodies, `esc` clears |
-| `d` | delete, asks first |
+| `d` | move to trash, asks first |
+| `u` | undo the last delete |
 | `w` | start the web UI and open a browser |
 | `r` | reload from disk |
 | `?` | full help |
@@ -86,7 +87,29 @@ One SQLite file:
 ~/.local/share/notes/notes.db
 ```
 
-Back it up by copying that file. Point somewhere else with `--db /path/to.db` or
+Back it up by copying that file.
+
+### Nothing is deleted in a hurry
+
+`d` moves a note to a trash rather than destroying it. `u` brings back the last
+one you trashed, and trashed notes stay recoverable for 30 days before being
+purged.
+
+Every time `notes` starts it also copies the database to
+`~/.local/share/notes/backups/`, keeping the last 10. To go back to one:
+
+```bash
+cp ~/.local/share/notes/backups/notes-20260913-140331.db \
+   ~/.local/share/notes/notes.db
+```
+
+### Trying things out safely
+
+Point it at a throwaway database to experiment without touching your notes:
+
+```bash
+notes --db /tmp/scratch.db
+``` Point somewhere else with `--db /path/to.db` or
 `NOTES_DB=/path/to.db`. No server, no daemon, nothing running when you're not
 using it.
 

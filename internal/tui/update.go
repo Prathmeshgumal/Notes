@@ -63,7 +63,8 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.err = err
 				return m, nil
 			}
-			return m, tea.Batch(m.reload(), flash("Deleted"))
+			m.lastDeleted = n.ID
+			return m, tea.Batch(m.reload(), flash("Moved to trash — press u to undo"))
 		default:
 			m.mode = modeList
 			return m, nil
@@ -162,6 +163,16 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	case "w":
 		return m, m.toggleWeb()
+	case "u":
+		if m.lastDeleted == "" {
+			return m, flash("Nothing to undo")
+		}
+		if err := m.st.Restore(m.lastDeleted); err != nil {
+			m.err = err
+			return m, nil
+		}
+		m.lastDeleted = ""
+		return m, tea.Batch(m.reload(), flash("Restored"))
 	case "r":
 		return m, tea.Batch(m.reload(), flash("Reloaded"))
 	case "?":

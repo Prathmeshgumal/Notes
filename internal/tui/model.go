@@ -43,6 +43,15 @@ type model struct {
 	server *web.Server
 	status string
 	err    error
+
+	lastDeleted string // id of the most recent delete, for undo
+
+	// Rendering Markdown is the expensive part of moving the cursor, so the
+	// renderer is built once per width and the output cached per note.
+	renderer      *glamour.TermRenderer
+	rendererWidth int
+	glamourStyle  string
+	rendered      map[string]string
 }
 
 type reloadedMsg struct {
@@ -69,13 +78,22 @@ func New(st *store.Store) model {
 	body.ShowLineNumbers = false
 	body.CharLimit = 0
 
+	// Ask the terminal about its background exactly once. Doing this per
+	// render (via glamour's auto style) stalls every keypress.
+	glamourStyle := "dark"
+	if !lipgloss.HasDarkBackground() {
+		glamourStyle = "light"
+	}
+
 	m := model{
-		st:      st,
-		search:  search,
-		title:   title,
-		body:    body,
-		preview: viewport.New(0, 0),
-		mode:    modeList,
+		st:           st,
+		glamourStyle: glamourStyle,
+		rendered:     map[string]string{},
+		search:       search,
+		title:        title,
+		body:         body,
+		preview:      viewport.New(0, 0),
+		mode:         modeList,
 		// Sensible defaults so the first frame renders even if the terminal
 		// never reports its size; WindowSizeMsg overrides these.
 		width:  80,
@@ -137,6 +155,7 @@ func (m *model) layout() {
 }
 
 // renderPreview turns the selected note's Markdown into styled terminal output.
+// Results are cached: moving the cursor must not re-render or re-detect colours.
 func (m *model) renderPreview() {
 	n := m.selected()
 	if n == nil {
@@ -147,19 +166,34 @@ func (m *model) renderPreview() {
 	if width < 20 {
 		width = 20
 	}
-	r, err := glamour.NewTermRenderer(
-		glamour.WithAutoStyle(),
-		glamour.WithWordWrap(width-2),
-	)
+
+	if cached, ok := m.rendered[n.ID+"\x00"+n.UpdatedAt]; ok {
+		m.preview.SetContent(cached)
+		m.preview.GotoTop()
+		return
+	}
+
+	if m.renderer == nil || m.rendererWidth != width {
+		r, err := glamour.NewTermRenderer(
+			glamour.WithStandardStyle(m.glamourStyle),
+			glamour.WithWordWrap(width-2),
+		)
+		if err != nil {
+			m.preview.SetContent(n.Content)
+			return
+		}
+		m.renderer = r
+		m.rendererWidth = width
+		// Cached output was wrapped for the old width.
+		m.rendered = map[string]string{}
+	}
+
+	out, err := m.renderer.Render(n.Content)
 	if err != nil {
 		m.preview.SetContent(n.Content)
 		return
 	}
-	out, err := r.Render(n.Content)
-	if err != nil {
-		m.preview.SetContent(n.Content)
-		return
-	}
+	m.rendered[n.ID+"\x00"+n.UpdatedAt] = out
 	m.preview.SetContent(out)
 	m.preview.GotoTop()
 }

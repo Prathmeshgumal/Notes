@@ -32,6 +32,11 @@ func main() {
 		return
 	}
 
+	// Copy the database before touching it, so a bad day is always recoverable.
+	if _, err := store.Snapshot(*dbPath); err != nil {
+		fmt.Fprintln(os.Stderr, "warning: could not write a snapshot:", err)
+	}
+
 	st, err := store.Open(*dbPath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)

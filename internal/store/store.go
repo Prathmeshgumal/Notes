@@ -35,9 +35,13 @@ CREATE TABLE IF NOT EXISTS notes (
   title      TEXT NOT NULL DEFAULT 'Untitled',
   content    TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT
 );
 CREATE INDEX IF NOT EXISTS notes_updated_at_idx ON notes (updated_at DESC);`
+
+// TrashRetention is how long a deleted note stays recoverable.
+const TrashRetention = 30 * 24 * time.Hour
 
 // Open prepares the database file, creating parent directories as needed.
 func Open(path string) (*Store, error) {
@@ -55,7 +59,16 @@ func Open(path string) (*Store, error) {
 	if _, err := db.Exec(schema); err != nil {
 		return nil, fmt.Errorf("creating schema: %w", err)
 	}
-	return &Store{db: db, Path: path}, nil
+	// Databases created before the trash existed need the extra column.
+	if _, err := db.Exec(`ALTER TABLE notes ADD COLUMN deleted_at TEXT`); err != nil &&
+		!strings.Contains(err.Error(), "duplicate column") {
+		return nil, fmt.Errorf("migrating schema: %w", err)
+	}
+	st := &Store{db: db, Path: path}
+	if err := st.purgeExpiredTrash(); err != nil {
+		return nil, err
+	}
+	return st, nil
 }
 
 func (s *Store) Close() error { return s.db.Close() }
@@ -81,14 +94,15 @@ func (s *Store) List(query string) ([]Note, error) {
 	const cols = `SELECT id, title, content, created_at, updated_at FROM notes`
 	if q := strings.TrimSpace(query); q != "" {
 		like := "%" + q + "%"
-		rows, err := s.db.Query(cols+` WHERE title LIKE ? OR content LIKE ?
+		rows, err := s.db.Query(cols+` WHERE deleted_at IS NULL
+			AND (title LIKE ? OR content LIKE ?)
 			ORDER BY updated_at DESC`, like, like)
 		if err != nil {
 			return nil, err
 		}
 		return scan(rows)
 	}
-	rows, err := s.db.Query(cols + ` ORDER BY updated_at DESC`)
+	rows, err := s.db.Query(cols + ` WHERE deleted_at IS NULL ORDER BY updated_at DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +112,8 @@ func (s *Store) List(query string) ([]Note, error) {
 func (s *Store) Get(id string) (Note, error) {
 	var n Note
 	err := s.db.QueryRow(
-		`SELECT id, title, content, created_at, updated_at FROM notes WHERE id = ?`, id,
+		`SELECT id, title, content, created_at, updated_at FROM notes
+		 WHERE id = ? AND deleted_at IS NULL`, id,
 	).Scan(&n.ID, &n.Title, &n.Content, &n.CreatedAt, &n.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return n, ErrNotFound
@@ -121,7 +136,8 @@ func (s *Store) Create(title, content string) (Note, error) {
 }
 
 func (s *Store) Update(id, title, content string) (Note, error) {
-	res, err := s.db.Exec(`UPDATE notes SET title = ?, content = ?, updated_at = ? WHERE id = ?`,
+	res, err := s.db.Exec(`UPDATE notes SET title = ?, content = ?, updated_at = ?
+		WHERE id = ? AND deleted_at IS NULL`,
 		DeriveTitle(title, content), content, now(), id)
 	if err != nil {
 		return Note{}, err
@@ -132,8 +148,11 @@ func (s *Store) Update(id, title, content string) (Note, error) {
 	return s.Get(id)
 }
 
+// Delete moves a note to the trash rather than destroying it. Trashed notes
+// stay recoverable for TrashRetention before being purged on the next open.
 func (s *Store) Delete(id string) error {
-	res, err := s.db.Exec(`DELETE FROM notes WHERE id = ?`, id)
+	res, err := s.db.Exec(`UPDATE notes SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL`,
+		now(), id)
 	if err != nil {
 		return err
 	}
@@ -143,9 +162,37 @@ func (s *Store) Delete(id string) error {
 	return nil
 }
 
+// Restore brings a trashed note back.
+func (s *Store) Restore(id string) error {
+	res, err := s.db.Exec(`UPDATE notes SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL`, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// Trash lists what is currently recoverable, most recently deleted first.
+func (s *Store) Trash() ([]Note, error) {
+	rows, err := s.db.Query(`SELECT id, title, content, created_at, updated_at FROM notes
+		WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC`)
+	if err != nil {
+		return nil, err
+	}
+	return scan(rows)
+}
+
+func (s *Store) purgeExpiredTrash() error {
+	cutoff := time.Now().UTC().Add(-TrashRetention).Format(time.RFC3339Nano)
+	_, err := s.db.Exec(`DELETE FROM notes WHERE deleted_at IS NOT NULL AND deleted_at < ?`, cutoff)
+	return err
+}
+
 func (s *Store) Count() (int, error) {
 	var n int
-	err := s.db.QueryRow(`SELECT count(*) FROM notes`).Scan(&n)
+	err := s.db.QueryRow(`SELECT count(*) FROM notes WHERE deleted_at IS NULL`).Scan(&n)
 	return n, err
 }
 

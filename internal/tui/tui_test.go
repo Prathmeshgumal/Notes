@@ -167,3 +167,41 @@ func mustList(t *testing.T, st *store.Store) []store.Note {
 	}
 	return notes
 }
+
+func TestUndoRestoresLastDelete(t *testing.T) {
+	m, st := newTestModel(t)
+	n, err := st.Create("Precious", "body")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	m = press(press(m, key('d')), key('y'))
+	if len(mustList(t, st)) != 0 {
+		t.Fatal("note was not trashed")
+	}
+
+	m = press(m, key('u'))
+	notes := mustList(t, st)
+	if len(notes) != 1 || notes[0].ID != n.ID {
+		t.Fatalf("undo did not restore the note: %v", notes)
+	}
+}
+
+func TestUndoWithNothingDeletedIsHarmless(t *testing.T) {
+	m, st := newTestModel(t)
+	if _, err := st.Create("a", "b"); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	m = press(m, key('u'))
+	if m.err != nil {
+		t.Errorf("undo with nothing to undo set an error: %v", m.err)
+	}
+	if len(mustList(t, st)) != 1 {
+		t.Error("undo changed the notes")
+	}
+}

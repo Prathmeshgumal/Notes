@@ -48,7 +48,7 @@ func (m model) listView() string {
 	if m.mode == modeConfirm {
 		if n := m.selected(); n != nil {
 			return body + "\n" + errStyle.Render(
-				fmt.Sprintf(" Delete %q? ", truncate(n.Title, 40))) +
+				fmt.Sprintf(" Move %q to the trash? ", truncate(n.Title, 40))) +
 				helpStyle.Render("y / n")
 		}
 	}
