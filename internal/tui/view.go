@@ -46,10 +46,19 @@ func (m model) listView() string {
 	if previewWidth < 20 {
 		previewWidth = 20
 	}
+	// The bar sits inside the pane, so the text is one column narrower than the
+	// pane. It stays blank when the whole note already fits.
+	scrolled := withScrollbar(
+		m.preview.View(),
+		m.preview.Height,
+		m.preview.TotalLineCount(),
+		m.preview.YOffset,
+	)
+
 	preview := focusedPane.
 		Width(previewWidth).
 		Height(inner).
-		Render(titleStyle.Render(truncate(header, previewWidth-2)) + "\n" + m.preview.View())
+		Render(titleStyle.Render(truncate(header, previewWidth-4)) + "\n" + scrolled)
 
 	body := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, preview)
 

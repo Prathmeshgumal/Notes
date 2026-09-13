@@ -28,18 +28,29 @@ func (m model) helpLine() string {
 	case modeHelp:
 		return "any key to close"
 	default:
-		return "j/k move  ↵ edit  n new  / search  o link  d trash  u undo  T trash  w web  ? help  q quit"
+		return "j/k note  ↑/↓ scroll  ↵ edit  n new  / search  y copy  o link  d trash  w web  ? help  q quit"
 	}
 }
 
 const helpText = `
   Notes — keys
 
-  Moving
-    j / ↓        next note
-    k / ↑        previous note
+  Choosing a note
+    j            next note
+    k            previous note
     g / G        first / last note
     /            search, esc to clear
+
+  Reading a long note
+    ↑ / ↓        scroll a line — the mouse wheel sends these too
+    space / b    scroll a page          pgup / pgdn  the same
+    ctrl+d / u   scroll half a page
+    home / end   jump to the top / bottom
+
+  Copying
+    y            copy the note's Markdown to the clipboard
+    R            show the Markdown source, to select with the mouse
+    ctrl+y       copy while editing
 
   Writing
     ↵            edit the selected note

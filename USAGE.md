@@ -37,15 +37,47 @@ bar along the bottom always shows the keys available right now.
 
 | Key | Does |
 | --- | --- |
-| `j` / `↓` | Next note |
-| `k` / `↑` | Previous note |
-| `g` | Jump to the first note |
-| `G` | Jump to the last note |
-| `ctrl+d` | Scroll the preview down half a screen |
-| `ctrl+u` | Scroll the preview up half a screen |
+| `j` | Next note |
+| `k` | Previous note |
+| `g` / `G` | Jump to the first / last note |
 | `r` | Reload from disk (picks up changes made in the web UI) |
 | `?` | Full help — any key closes it |
 | `q` | Quit |
+
+### Reading a long note
+
+The right-hand pane scrolls, and shows a scrollbar when there is more than fits.
+
+| Key | Does |
+| --- | --- |
+| `↑` / `↓` | Scroll one line |
+| `space` / `b` | Scroll a page — `pgup` / `pgdn` do the same |
+| `ctrl+d` / `ctrl+u` | Scroll half a page |
+| `home` / `end` | Jump to the top / bottom |
+
+**The mouse wheel scrolls the note.** A terminal turns the wheel into arrow
+keys, which is why the arrows scroll the preview rather than moving between
+notes — use `j` and `k` for that.
+
+### Copying a note
+
+| Key | Does |
+| --- | --- |
+| `y` | Copy the note's Markdown to the clipboard |
+| `R` | Show the Markdown source instead of the rendered note |
+| `ctrl+y` | Copy what you are writing, while editing |
+
+`y` copies the raw Markdown, not the rendered text, so it pastes cleanly into
+anything that understands Markdown.
+
+It tries two routes, because neither works everywhere: a clipboard tool
+(`xclip`, `wl-copy` or `pbcopy`) if one is installed, and the terminal's own
+clipboard escape, which needs no tools and works over SSH. The status line says
+which one carried it.
+
+If neither works in your terminal, `R` is the fallback: it shows the Markdown
+source in the pane, which you can select with the mouse and copy the way you
+would any other terminal text.
 
 Notes are listed **most recently edited first**, so whatever you last worked on
 is at the top. Saving a note moves it to the top, and your selection follows it

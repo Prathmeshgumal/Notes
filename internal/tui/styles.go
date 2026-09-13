@@ -20,4 +20,7 @@ var (
 
 	selectedStyle = lipgloss.NewStyle().Foreground(accent).Bold(true)
 	cursorStyle   = lipgloss.NewStyle().Foreground(accent)
+
+	scrollTrackStyle = lipgloss.NewStyle().Foreground(subtle)
+	scrollThumbStyle = lipgloss.NewStyle().Foreground(accent)
 )

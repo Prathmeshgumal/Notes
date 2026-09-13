@@ -208,6 +208,8 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, flash("Discarded")
 		case tea.KeyCtrlE:
 			return m, m.externalEdit()
+		case tea.KeyCtrlY:
+			return m, flash(copyToClipboard(m.body.Value()))
 		case tea.KeyCtrlP:
 			// Preview what is being written, the Write/Preview pair the web
 			// editor has. The draft is rendered, not the saved note.
@@ -240,28 +242,48 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "q":
 		return m, tea.Quit
-	case "j", "down":
-		if m.cursor < len(m.notes)-1 {
-			m.cursor++
-			m.linkCursor = 0
-			m.renderPreview()
-		}
-	case "k", "up":
-		if m.cursor > 0 {
-			m.cursor--
-			m.linkCursor = 0
-			m.renderPreview()
-		}
+	case "j":
+		m.moveCursor(1)
+	case "k":
+		m.moveCursor(-1)
 	case "g":
 		m.cursor = 0
 		m.renderPreview()
 	case "G":
 		m.cursor = max(0, len(m.notes)-1)
 		m.renderPreview()
+
+	// The preview scrolls; the list does not. A terminal turns the mouse wheel
+	// into arrow keys in the alternate screen, so binding the arrows here is
+	// what makes the wheel scroll the note instead of jumping between notes.
+	case "down":
+		m.preview.LineDown(1)
+	case "up":
+		m.preview.LineUp(1)
+	case "pgdown", " ":
+		m.preview.ViewDown()
+	case "pgup", "b":
+		m.preview.ViewUp()
 	case "ctrl+d":
 		m.preview.HalfViewDown()
 	case "ctrl+u":
 		m.preview.HalfViewUp()
+	case "home":
+		m.preview.GotoTop()
+	case "end":
+		m.preview.GotoBottom()
+
+	case "y":
+		if n := m.selected(); n != nil {
+			return m, flash(copyToClipboard(n.Content))
+		}
+	case "R":
+		m.rawPreview = !m.rawPreview
+		m.renderPreview()
+		if m.rawPreview {
+			return m, flash("Showing Markdown source — select it with the mouse to copy")
+		}
+		return m, flash("Showing the rendered note")
 	case "enter":
 		if n := m.selected(); n != nil {
 			m.startEdit(n)

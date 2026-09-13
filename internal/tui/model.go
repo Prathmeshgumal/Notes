@@ -43,6 +43,7 @@ type model struct {
 	editing      *store.Note // nil while composing a brand-new note
 	focusTitle   bool
 	previewDraft bool // showing the draft rendered, rather than its source
+	rawPreview   bool // showing Markdown source in the preview, for copying
 	draft        viewport.Model
 
 	server *web.Server
@@ -156,6 +157,17 @@ func (m *model) selected() *store.Note {
 	return &m.notes[m.cursor]
 }
 
+// moveCursor changes the selected note and resets everything tied to it.
+func (m *model) moveCursor(delta int) {
+	next := m.cursor + delta
+	if next < 0 || next >= len(m.notes) {
+		return
+	}
+	m.cursor = next
+	m.linkCursor = 0
+	m.renderPreview()
+}
+
 func (m *model) layout() {
 	if m.width == 0 {
 		return
@@ -168,7 +180,7 @@ func (m *model) layout() {
 	if previewWidth < 20 {
 		previewWidth = 20
 	}
-	m.preview.Width = previewWidth
+	m.preview.Width = previewWidth - 1 // one column for the scrollbar
 	m.preview.Height = paneHeight - 3
 
 	m.draft.Width = m.width - 6
@@ -191,6 +203,12 @@ func (m *model) renderPreview() {
 	width := m.preview.Width
 	if width < 20 {
 		width = 20
+	}
+
+	if m.rawPreview {
+		m.preview.SetContent(n.Content)
+		m.preview.GotoTop()
+		return
 	}
 
 	if cached, ok := m.rendered[n.ID+"\x00"+n.UpdatedAt]; ok {
