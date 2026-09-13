@@ -16,13 +16,29 @@ var (
 	listSeparator = "<!-- -->"
 )
 
+// A paragraph holding only a zero-width space renders as an empty line, which
+// is how a run of blank lines is reproduced. The renderer puts one blank line
+// above and below every block, so each filler is worth two blank lines and a
+// run comes out as 1+2n — even-length runs land on the nearest odd number below.
+const zeroWidthSpace = "\u200b"
+
+// fillersFor converts the length of a blank run into the number of filler
+// paragraphs needed to reproduce roughly that much vertical space.
+func fillersFor(blankRun int) int {
+	if blankRun < 2 {
+		return 0
+	}
+	return (blankRun - 1) / 2
+}
+
 // separateListGroups keeps the blank lines a writer puts between groups of
 // bullets visible in the rendered output.
 //
-// Markdown treats a blank line inside a list as part of the same list, so the
-// renderer closes the gap. Emitting an empty HTML comment between the groups
-// ends one list and starts another, which restores the spacing without showing
-// anything. Ordered lists are skipped, since splitting them restarts numbering.
+// Markdown treats a blank line inside a list as part of the same list, and
+// collapses any run of blank lines into a single break, so the renderer closes
+// the gap. Emitting an empty HTML comment ends one list and starts another,
+// and filler paragraphs after it reproduce the height of the original run.
+// Ordered lists are skipped, since splitting them restarts numbering.
 func separateListGroups(md string) string {
 	if !strings.Contains(md, "\n\n") {
 		return md
@@ -54,11 +70,13 @@ func separateListGroups(md string) string {
 
 		if anyListItem.MatchString(prev) && !orderedItem.MatchString(prev) &&
 			topLevelBullet.MatchString(next) {
-			// Copy the rest of the blank run, then break the list.
-			for ; i+1 < j; i++ {
-				out = append(out, lines[i+1])
-			}
+			// One blank line is already in `out`; replace the rest of the run
+			// with a list break plus enough fillers to match its height.
 			out = append(out, listSeparator, "")
+			for k := fillersFor(j - i); k > 0; k-- {
+				out = append(out, zeroWidthSpace, "")
+			}
+			i = j - 1 // resume at the line that ended the run
 		}
 	}
 	return strings.Join(out, "\n")

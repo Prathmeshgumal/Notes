@@ -81,3 +81,31 @@ func TestSeparateListGroupsHandlesMultipleGroups(t *testing.T) {
 		t.Errorf("got %d separators, want 2:\n%s", n, got)
 	}
 }
+
+// The point of the fillers is vertical space, so assert on what glamour
+// actually renders rather than on the intermediate Markdown.
+func TestBlankRunHeightIsPreserved(t *testing.T) {
+	for _, tc := range []struct{ typed, rendered int }{
+		{typed: 1, rendered: 1},
+		{typed: 2, rendered: 1},
+		{typed: 3, rendered: 3},
+		{typed: 5, rendered: 5},
+		{typed: 7, rendered: 7},
+	} {
+		md := "- [ ] first group\n" + strings.Repeat("\n", tc.typed) + "- [ ] second group\n"
+		got := renderedBlankLines(t, separateListGroups(md))
+		if got != tc.rendered {
+			t.Errorf("typing %d blank lines rendered %d, want %d", tc.typed, got, tc.rendered)
+		}
+	}
+}
+
+func TestFillersFor(t *testing.T) {
+	for _, tc := range []struct{ run, want int }{
+		{0, 0}, {1, 0}, {2, 0}, {3, 1}, {4, 1}, {5, 2}, {7, 3},
+	} {
+		if got := fillersFor(tc.run); got != tc.want {
+			t.Errorf("fillersFor(%d) = %d, want %d", tc.run, got, tc.want)
+		}
+	}
+}
