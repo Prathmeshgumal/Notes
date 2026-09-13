@@ -64,7 +64,7 @@ notes — use `j` and `k` for that.
 | Key | Does |
 | --- | --- |
 | `y` | Copy the note's Markdown to the clipboard |
-| `R` | Show the Markdown source instead of the rendered note |
+| `R` | Show the Markdown source full-screen, to select with the mouse |
 | `ctrl+y` | Copy what you are writing, while editing |
 
 `y` copies the raw Markdown, not the rendered text, so it pastes cleanly into
@@ -75,9 +75,19 @@ It tries two routes, because neither works everywhere: a clipboard tool
 clipboard escape, which needs no tools and works over SSH. The status line says
 which one carried it.
 
-If neither works in your terminal, `R` is the fallback: it shows the Markdown
-source in the pane, which you can select with the mouse and copy the way you
-would any other terminal text.
+**To copy part of a note**, press `R`. It shows the Markdown source
+full-screen with no borders, no padding and no scrollbar, so dragging over it
+selects the note's text and nothing else. Copy with your terminal's own
+shortcut — `Ctrl+Shift+C` in GNOME Terminal and most Linux terminals, `Cmd+C`
+on macOS. `esc` goes back.
+
+The app never captures the mouse, so selection always belongs to your terminal.
+The reason `R` exists is that the normal view draws borders around the text,
+and a selection would carry those along with it.
+
+For `y` to use the system clipboard directly rather than the terminal escape,
+install a clipboard tool — `sudo apt install wl-clipboard` on Wayland, or
+`xclip` on X11.
 
 Notes are listed **most recently edited first**, so whatever you last worked on
 is at the top. Saving a note moves it to the top, and your selection follows it

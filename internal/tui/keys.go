@@ -9,6 +9,7 @@ const (
 	modeConfirm
 	modeHelp
 	modeTrash
+	modeRaw
 )
 
 // helpLine is the context-sensitive hint bar along the bottom.
@@ -23,6 +24,8 @@ func (m model) helpLine() string {
 		return "ctrl+s save  ctrl+p preview  ctrl+b bold  alt+i italic  ctrl+k link  ? in help: all keys  esc cancel"
 	case modeConfirm:
 		return "y confirm   n / esc cancel"
+	case modeRaw:
+		return "select with the mouse to copy   ↑/↓ scroll   y copy it all   esc back"
 	case modeTrash:
 		return "j/k move   ↵ restore   d delete for good   E empty trash   esc back"
 	case modeHelp:
@@ -49,7 +52,8 @@ const helpText = `
 
   Copying
     y            copy the note's Markdown to the clipboard
-    R            show the Markdown source, to select with the mouse
+    R            show the Markdown source full-screen, with no borders, so a
+                 mouse selection copies clean Markdown and nothing else
     ctrl+y       copy while editing
 
   Writing

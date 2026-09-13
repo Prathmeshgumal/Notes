@@ -9,6 +9,10 @@ import (
 
 func (m model) View() string {
 	switch m.mode {
+	case modeRaw:
+		// Deliberately bare: no panes, no borders, no padding, so selecting
+		// these lines with the mouse yields exactly the note's Markdown.
+		return m.rawView.View() + "\n" + helpStyle.Render(m.helpLine())
 	case modeConfirm:
 		// Draw whatever is being asked about, with the question in the footer.
 		if m.confirmReturn == modeTrash {

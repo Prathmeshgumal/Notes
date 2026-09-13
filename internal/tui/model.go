@@ -43,8 +43,8 @@ type model struct {
 	editing      *store.Note // nil while composing a brand-new note
 	focusTitle   bool
 	previewDraft bool // showing the draft rendered, rather than its source
-	rawPreview   bool // showing Markdown source in the preview, for copying
 	draft        viewport.Model
+	rawView      viewport.Model // full-screen Markdown source, for selecting
 
 	server *web.Server
 	status string
@@ -123,6 +123,7 @@ func New(st *store.Store) model {
 		body:         body,
 		preview:      viewport.New(0, 0),
 		draft:        viewport.New(0, 0),
+		rawView:      viewport.New(0, 0),
 		mode:         modeList,
 		// Sensible defaults so the first frame renders even if the terminal
 		// never reports its size; WindowSizeMsg overrides these.
@@ -192,6 +193,11 @@ func (m *model) layout() {
 	m.draft.Width = m.width - 6
 	m.draft.Height = paneHeight - 4
 
+	// Full width, no borders: a mouse selection here is the note and nothing
+	// else. One line is left for the hint along the bottom.
+	m.rawView.Width = m.width
+	m.rawView.Height = m.height - 1
+
 	m.title.Width = m.width - 6
 	m.body.SetWidth(m.width - 6)
 	m.body.SetHeight(paneHeight - 4)
@@ -209,12 +215,6 @@ func (m *model) renderPreview() {
 	width := m.preview.Width
 	if width < 20 {
 		width = 20
-	}
-
-	if m.rawPreview {
-		m.preview.SetContent(n.Content)
-		m.preview.GotoTop()
-		return
 	}
 
 	if cached, ok := m.rendered[n.ID+"\x00"+n.UpdatedAt]; ok {

@@ -107,6 +107,33 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case modeRaw:
+		switch msg.String() {
+		case "esc", "q", "R":
+			m.mode = modeList
+		case "down", "j":
+			m.rawView.LineDown(1)
+		case "up", "k":
+			m.rawView.LineUp(1)
+		case "pgdown", " ":
+			m.rawView.ViewDown()
+		case "pgup", "b":
+			m.rawView.ViewUp()
+		case "ctrl+d":
+			m.rawView.HalfViewDown()
+		case "ctrl+u":
+			m.rawView.HalfViewUp()
+		case "home", "g":
+			m.rawView.GotoTop()
+		case "end", "G":
+			m.rawView.GotoBottom()
+		case "y":
+			if n := m.selected(); n != nil {
+				return m, flash(copyToClipboard(n.Content))
+			}
+		}
+		return m, nil
+
 	case modeHelp:
 		m.mode = modeList
 		return m, nil
@@ -278,12 +305,11 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, flash(copyToClipboard(n.Content))
 		}
 	case "R":
-		m.rawPreview = !m.rawPreview
-		m.renderPreview()
-		if m.rawPreview {
-			return m, flash("Showing Markdown source — select it with the mouse to copy")
+		if n := m.selected(); n != nil {
+			m.mode = modeRaw
+			m.rawView.SetContent(n.Content)
+			m.rawView.GotoTop()
 		}
-		return m, flash("Showing the rendered note")
 	case "enter":
 		if n := m.selected(); n != nil {
 			m.startEdit(n)

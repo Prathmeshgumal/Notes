@@ -88,30 +88,66 @@ func TestPageAndHomeEndScrolling(t *testing.T) {
 	}
 }
 
-// R shows the Markdown source, so it can be selected with the mouse and
-// pasted elsewhere even where no clipboard route works.
-func TestRawViewShowsTheSource(t *testing.T) {
+// R opens a bare, full-width view of the Markdown source. It carries no
+// borders or padding, so selecting it with the mouse copies the note and
+// nothing else — which is the only route that works when no clipboard tool is
+// installed and the terminal refuses the clipboard escape.
+func TestRawViewIsBareSource(t *testing.T) {
 	m, st := newTestModel(t)
-	if _, err := st.Create("Note", "# Heading\n\n**bold** text"); err != nil {
+	src := "# Heading\n\n**bold** text\n- [ ] a task"
+	if _, err := st.Create("Note", src); err != nil {
 		t.Fatal(err)
 	}
 	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 24})
 	m = press(m, reloadedMsg{notes: mustList(t, st)})
 
-	rendered := stripANSI(m.View())
-	if strings.Contains(rendered, "**bold**") {
+	if strings.Contains(stripANSI(m.View()), "**bold**") {
 		t.Error("the rendered view is showing raw Markdown")
 	}
 
 	m = press(m, key('R'))
-	raw := stripANSI(m.View())
-	if !strings.Contains(raw, "**bold**") {
-		t.Errorf("R did not show the source:\n%s", raw)
+	if m.mode != modeRaw {
+		t.Fatalf("R did not open the source view, mode = %v", m.mode)
+	}
+	view := stripANSI(m.View())
+
+	for _, want := range []string{"# Heading", "**bold** text", "- [ ] a task"} {
+		if !strings.Contains(view, want) {
+			t.Errorf("source view is missing %q:\n%s", want, view)
+		}
+	}
+	// Nothing to catch in a selection but the note itself.
+	for _, chrome := range []string{"│", "╭", "╰", "┃"} {
+		if strings.Contains(view, chrome) {
+			t.Errorf("the source view draws %q, which a mouse selection would copy:\n%s",
+				chrome, view)
+		}
 	}
 
+	m = press(m, tea.KeyMsg{Type: tea.KeyEsc})
+	if m.mode != modeList {
+		t.Error("esc did not leave the source view")
+	}
+}
+
+func TestRawViewScrolls(t *testing.T) {
+	m, st := newTestModel(t)
+	if _, err := st.Create("Long", strings.Repeat("a line\n", 300)); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 24})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
 	m = press(m, key('R'))
-	if strings.Contains(stripANSI(m.View()), "**bold**") {
-		t.Error("R did not switch back to the rendered view")
+
+	for i := 0; i < 10; i++ {
+		m = press(m, tea.KeyMsg{Type: tea.KeyDown})
+	}
+	if m.rawView.YOffset != 10 {
+		t.Errorf("source view scrolled %d lines, want 10", m.rawView.YOffset)
+	}
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnd})
+	if m.rawView.YOffset == 10 {
+		t.Error("end did not jump to the bottom")
 	}
 }
 
