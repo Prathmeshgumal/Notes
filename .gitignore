@@ -1,7 +1,8 @@
 # build output
 /note
 client/dist/
-internal/web/dist/
+internal/web/dist/*
+!internal/web/dist/.gitkeep
 node_modules/
 
 # local data — never publish notes

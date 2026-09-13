@@ -21,6 +21,21 @@ fi
 
 VERSION="$(git describe --tags --always --dirty 2>/dev/null || echo dev)"
 
+# The one committed file in internal/web/dist. It exists so `go:embed all:dist`
+# has something to match on a fresh clone, which is what lets `go build` and
+# `go test` work before the web bundle has ever been built. Rewritten verbatim
+# after each build so the working tree stays clean.
+write_gitkeep() {
+  mkdir -p internal/web/dist
+  cat > internal/web/dist/.gitkeep <<'KEEP'
+The web UI is built into this directory by ./build.sh and is not committed.
+
+This file is committed so that `go:embed all:dist` has something to match,
+which means `go build` and `go test` work on a fresh clone without having to
+build the web bundle first. Without it the package does not compile at all.
+KEEP
+}
+
 if command -v npm >/dev/null 2>&1; then
   echo "==> Building the web UI"
   npm --prefix client install --no-fund --no-audit --silent
@@ -29,13 +44,14 @@ if command -v npm >/dev/null 2>&1; then
   echo "==> Embedding it in the binary"
   rm -rf internal/web/dist
   cp -r client/dist internal/web/dist
+  write_gitkeep
 else
   echo "==> npm not found; the web UI will show a placeholder"
 fi
 
 # go:embed needs the directory to exist even when the UI was never built.
+write_gitkeep
 if [ ! -f internal/web/dist/index.html ]; then
-  mkdir -p internal/web/dist
   cat > internal/web/dist/index.html <<'HTML'
 <!doctype html>
 <title>Notes — UI not built</title>
