@@ -1,4 +1,4 @@
-module github.com/prathmesh/notes
+module github.com/Prathmeshgumal/nib
 
 go 1.25.0
 

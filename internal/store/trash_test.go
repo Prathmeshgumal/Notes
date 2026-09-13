@@ -222,3 +222,76 @@ func TestEmptyTrashOnAnEmptyTrash(t *testing.T) {
 		t.Errorf("EmptyTrash on an empty trash = (%d, %v), want (0, nil)", n, err)
 	}
 }
+
+func TestAdoptLegacyBringsNotesAcross(t *testing.T) {
+	dir := t.TempDir()
+	oldPath := filepath.Join(dir, "old", "notes.db")
+	newPath := filepath.Join(dir, "new", "nib.db")
+
+	old, err := Open(oldPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := old.Create("from before the rename", "body"); err != nil {
+		t.Fatal(err)
+	}
+	old.Close()
+
+	moved, err := AdoptLegacy(newPath, oldPath)
+	if err != nil || !moved {
+		t.Fatalf("AdoptLegacy = (%v, %v), want (true, nil)", moved, err)
+	}
+
+	st, err := Open(newPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	notes := mustListStore(t, st)
+	if len(notes) != 1 || notes[0].Title != "from before the rename" {
+		t.Errorf("notes did not come across: %v", titles(notes))
+	}
+	// The original is left where it was, as a safety net.
+	if _, err := os.Stat(oldPath); err != nil {
+		t.Error("the old database was removed; it should be left alone")
+	}
+}
+
+func TestAdoptLegacyNeverOverwrites(t *testing.T) {
+	dir := t.TempDir()
+	oldPath := filepath.Join(dir, "old", "notes.db")
+	newPath := filepath.Join(dir, "new", "nib.db")
+
+	for path, title := range map[string]string{oldPath: "old note", newPath: "current note"} {
+		st, err := Open(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := st.Create(title, "x"); err != nil {
+			t.Fatal(err)
+		}
+		st.Close()
+	}
+
+	moved, err := AdoptLegacy(newPath, oldPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if moved {
+		t.Error("it adopted over an existing database")
+	}
+
+	st, _ := Open(newPath)
+	defer st.Close()
+	if n := mustListStore(t, st); len(n) != 1 || n[0].Title != "current note" {
+		t.Errorf("the existing notes were disturbed: %v", titles(n))
+	}
+}
+
+func TestAdoptLegacyWithNothingToAdopt(t *testing.T) {
+	dir := t.TempDir()
+	moved, err := AdoptLegacy(filepath.Join(dir, "nib.db"), filepath.Join(dir, "absent.db"))
+	if err != nil || moved {
+		t.Errorf("got (%v, %v), want (false, nil)", moved, err)
+	}
+}

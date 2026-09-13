@@ -1,17 +1,17 @@
 <div align="center">
 
-# note
+# nib
 
 **A Markdown note taker that lives in your terminal — and in your browser, from the same binary.**
 
 Your notes are one SQLite file on your own disk. No account, no cloud, no sync service,
 nothing running in the background.
 
-[![CI](https://github.com/Prathmeshgumal/Notes/actions/workflows/ci.yml/badge.svg)](https://github.com/Prathmeshgumal/Notes/actions/workflows/ci.yml)
+[![CI](https://github.com/Prathmeshgumal/nib/actions/workflows/ci.yml/badge.svg)](https://github.com/Prathmeshgumal/nib/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.24%2B-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)](#platforms)
-[![Release](https://img.shields.io/github/v/release/Prathmeshgumal/Notes?color=success)](https://github.com/Prathmeshgumal/Notes/releases/latest)
+[![Release](https://img.shields.io/github/v/release/Prathmeshgumal/nib?color=success)](https://github.com/Prathmeshgumal/nib/releases/latest)
 
 </div>
 
@@ -30,7 +30,7 @@ Most note apps make you pick a side. Terminal tools are fast but ask you to give
 readable, formatted view. Desktop apps are comfortable but ship a browser engine to draw
 a text box, and want an account before you can write anything down.
 
-`note` is one 20 MB binary that gives you both views of the same SQLite file. It starts
+`nib` is one 20 MB binary that gives you both views of the same SQLite file. It starts
 in 46 ms with a thousand notes in it, holds about 27 MB of memory while you write, and
 leaves nothing running when you quit.
 
@@ -41,18 +41,18 @@ leaves nothing running when you quit.
 Download it and run it. Nothing else to install — no Go, no Node, no runtime.
 
 ```bash
-curl -L https://github.com/Prathmeshgumal/Notes/releases/latest/download/note-linux-amd64 -o note
-chmod +x note
-./note
+curl -L https://github.com/Prathmeshgumal/nib/releases/latest/download/nib-linux-amd64 -o nib
+chmod +x nib
+./nib
 ```
 
 To keep it around, put it on your PATH:
 
 ```bash
-mv note ~/.local/bin/
+mv nib ~/.local/bin/
 ```
 
-On a 64-bit ARM machine — a Pi, an ARM server — use `note-linux-arm64` instead.
+On a 64-bit ARM machine — a Pi, an ARM server — use `nib-linux-arm64` instead.
 
 <details>
 <summary>Verifying the download</summary>
@@ -61,8 +61,8 @@ Every release ships a `checksums.txt`. Keep the original filename so the check c
 the file:
 
 ```bash
-curl -LO https://github.com/Prathmeshgumal/Notes/releases/latest/download/note-linux-amd64
-curl -LO https://github.com/Prathmeshgumal/Notes/releases/latest/download/checksums.txt
+curl -LO https://github.com/Prathmeshgumal/nib/releases/latest/download/nib-linux-amd64
+curl -LO https://github.com/Prathmeshgumal/nib/releases/latest/download/checksums.txt
 sha256sum --ignore-missing -c checksums.txt
 ```
 
@@ -75,16 +75,16 @@ You need [Go](https://go.dev/dl) and [Node](https://nodejs.org) to build, though
 needed to run the result.
 
 ```bash
-git clone https://github.com/Prathmeshgumal/Notes.git
+git clone https://github.com/Prathmeshgumal/nib.git
 cd Notes
 ./build.sh
-cp note ~/.local/bin/
+cp nib ~/.local/bin/
 ```
 
 </details>
 
 <details>
-<summary><code>note: command not found</code></summary>
+<summary><code>nib: command not found</code></summary>
 
 `~/.local/bin` isn't on your PATH:
 
@@ -127,7 +127,7 @@ your application code runs at all*:
 | Python, empty script | 13.4 ms |
 | Node, empty script | 20.4 ms |
 | Node, after `require('react')` + `react-dom` | 38.7 ms |
-| **`note`, first painted frame with 1,000 notes** | **46 ms** |
+| **`nib`, first painted frame with 1,000 notes** | **46 ms** |
 
 That last row is not a floor. It is the whole application: opening the database, reading
 every note, rendering Markdown to ANSI and painting a full two-pane UI. A Node-based
@@ -218,7 +218,7 @@ nothing on your network can reach it.
 **A small HTTP API**, so your notes are scriptable:
 
 ```bash
-note --web &
+nib --web &
 curl localhost:4321/api/notes
 curl -X POST localhost:4321/api/notes \
   -H 'Content-Type: application/json' \
@@ -232,15 +232,15 @@ Full reference: **[USAGE.md](./USAGE.md)**.
 ## Your data
 
 ```
-~/.local/share/notes/notes.db        every note, one file
-~/.local/share/notes/backups/        automatic snapshots, the last 10
+~/.local/share/nib/nib.db        every note, one file
+~/.local/share/nib/backups/        automatic snapshots, the last 10
 ```
 
 Copy that file and you have copied everything. Point somewhere else with
 `--db /path/to.db`, or experiment safely on a throwaway:
 
 ```bash
-note --db /tmp/scratch.db
+nib --db /tmp/scratch.db
 ```
 
 Nothing leaves your machine. There is no account, no telemetry, and no network access

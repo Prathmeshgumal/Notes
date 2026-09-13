@@ -6,7 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/prathmesh/notes/internal/store"
+	"github.com/Prathmeshgumal/nib/internal/store"
 )
 
 func benchModel(b *testing.B) model {

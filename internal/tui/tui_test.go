@@ -7,7 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/prathmesh/notes/internal/store"
+	"github.com/Prathmeshgumal/nib/internal/store"
 )
 
 func newTestModel(t *testing.T) (model, *store.Store) {

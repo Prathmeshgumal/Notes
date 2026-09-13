@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the web UI, embeds it, and compiles the single `note` binary.
+# Builds the web UI, embeds it, and compiles the single `nib` binary.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -54,7 +54,7 @@ write_gitkeep
 if [ ! -f internal/web/dist/index.html ]; then
   cat > internal/web/dist/index.html <<'HTML'
 <!doctype html>
-<title>Notes — UI not built</title>
+<title>nib — UI not built</title>
 <body style="font:14px system-ui;padding:2rem">
   <h1>The web UI has not been built into this binary.</h1>
   <p>Install Node, then run <code>./build.sh</code> again.</p>
@@ -63,8 +63,8 @@ HTML
 fi
 
 echo "==> Compiling"
-go build -ldflags "-s -w -X main.version=${VERSION}" -o note .
+go build -ldflags "-s -w -X main.version=${VERSION}" -o nib .
 
 echo
-echo "Built ./note ($(du -h note | cut -f1))"
-echo "Run it with:  ./note"
+echo "Built ./nib ($(du -h nib | cut -f1))"
+echo "Run it with:  ./nib"

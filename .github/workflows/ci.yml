@@ -51,8 +51,8 @@ jobs:
 
       - name: Smoke test
         run: |
-          ./note --version
-          ./note --web --port 4321 --db /tmp/ci.db &
+          ./nib --version
+          ./nib --web --port 4321 --db /tmp/ci.db &
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:4321/api/health && break
             sleep 1

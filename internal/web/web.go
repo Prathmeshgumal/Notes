@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prathmesh/notes/internal/store"
+	"github.com/Prathmeshgumal/nib/internal/store"
 )
 
 //go:embed all:dist

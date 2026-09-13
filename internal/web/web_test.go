@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/prathmesh/notes/internal/store"
+	"github.com/Prathmeshgumal/nib/internal/store"
 )
 
 func newTestServer(t *testing.T) (http.Handler, *store.Store) {

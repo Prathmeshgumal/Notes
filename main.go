@@ -1,4 +1,4 @@
-// Command notes is a local-first Markdown note taker: a terminal UI by
+// Command nib is a local-first Markdown note taker: a terminal UI by
 // default, with an optional web interface served from the same binary.
 package main
 
@@ -11,9 +11,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/prathmesh/notes/internal/store"
-	"github.com/prathmesh/notes/internal/tui"
-	"github.com/prathmesh/notes/internal/web"
+	"github.com/Prathmeshgumal/nib/internal/store"
+	"github.com/Prathmeshgumal/nib/internal/tui"
+	"github.com/Prathmeshgumal/nib/internal/web"
 )
 
 var version = "dev"
@@ -28,8 +28,19 @@ func main() {
 	flag.Parse()
 
 	if *showVer {
-		fmt.Println("note", version)
+		fmt.Println("nib", version)
 		return
+	}
+
+	// Notes written under the program's previous name follow it here.
+	if *dbPath == tui.DefaultPath() {
+		moved, err := store.AdoptLegacy(*dbPath, tui.LegacyPath())
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "warning: could not bring your old notes across:", err)
+		} else if moved {
+			fmt.Fprintf(os.Stderr, "Your notes moved to %s — the old copy is still at %s\n",
+				*dbPath, tui.LegacyPath())
+		}
 	}
 
 	// Copy the database before touching it, so a bad day is always recoverable.
@@ -67,7 +78,7 @@ func runWeb(st *store.Store, port int) {
 		os.Exit(1)
 	}
 	srv.Start()
-	fmt.Printf("\n  Notes web UI at %s\n  Database: %s\n  Ctrl+C to stop\n\n", srv.URL, st.Path)
+	fmt.Printf("\n  nib web UI at %s\n  Database: %s\n  Ctrl+C to stop\n\n", srv.URL, st.Path)
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)

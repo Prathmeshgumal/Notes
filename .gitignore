@@ -1,5 +1,5 @@
 # build output
-/note
+/nib
 client/dist/
 internal/web/dist/*
 !internal/web/dist/.gitkeep

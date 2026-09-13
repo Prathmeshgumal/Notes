@@ -1,12 +1,12 @@
-# Using note
+# Using nib
 
 Everything this app can do, and how to do it.
 
 If you have not installed it yet, the quickest way is to download the binary:
 
 ```bash
-curl -L https://github.com/Prathmeshgumal/Notes/releases/latest/download/note-linux-amd64 -o note
-chmod +x note && mv note ~/.local/bin/
+curl -L https://github.com/Prathmeshgumal/nib/releases/latest/download/nib-linux-amd64 -o nib
+chmod +x nib && mv nib ~/.local/bin/
 ```
 
 There are two interfaces over the same notes: a terminal UI (the default) and a
@@ -19,13 +19,13 @@ both can be open at once.
 
 | Command | What it does |
 | --- | --- |
-| `note` | Open the terminal UI |
-| `note --web` | Run only the web UI, no terminal interface |
-| `note --web --port 9000` | Same, on a port of your choosing (default 4321) |
-| `note --db /tmp/scratch.db` | Use a different database — handy for experimenting |
-| `note --version` | Print the version and exit |
+| `nib` | Open the terminal UI |
+| `nib --web` | Run only the web UI, no terminal interface |
+| `nib --web --port 9000` | Same, on a port of your choosing (default 4321) |
+| `nib --db /tmp/scratch.db` | Use a different database — handy for experimenting |
+| `nib --version` | Print the version and exit |
 
-`NOTES_DB=/path/to.db note` does the same as `--db`.
+`NIB_DB=/path/to.db nib` does the same as `--db`.
 
 Nothing runs in the background. When you quit, nothing is left running.
 
@@ -325,24 +325,24 @@ Numbered lists are left alone, because splitting one would restart it at 1.
 ## Your notes on disk
 
 ```
-~/.local/share/notes/notes.db          your notes, one SQLite file
-~/.local/share/notes/backups/          automatic snapshots
+~/.local/share/nib/nib.db          your notes, one SQLite file
+~/.local/share/nib/backups/          automatic snapshots
 ```
 
 Back everything up by copying that one file.
 
-**Snapshots happen on their own.** Every time `note` starts, it copies the
+**Snapshots happen on their own.** Every time `nib` starts, it copies the
 database into `backups/` and keeps the most recent **10**. To go back to one:
 
 ```bash
-cp ~/.local/share/notes/backups/notes-20260913-140331.db \
-   ~/.local/share/notes/notes.db
+cp ~/.local/share/nib/backups/notes-20260913-140331.db \
+   ~/.local/share/nib/nib.db
 ```
 
 **Try things safely** on a throwaway database, without touching your real notes:
 
 ```bash
-note --db /tmp/scratch.db
+nib --db /tmp/scratch.db
 ```
 
 Nothing leaves your machine. The web UI binds to `127.0.0.1`, so it isn't
@@ -374,7 +374,7 @@ The trash routes only act on trashed notes: a live note returns 404, so nothing
 can be destroyed without being trashed first.
 
 ```bash
-note --web &
+nib --web &
 curl localhost:4321/api/notes
 curl -X POST localhost:4321/api/notes \
   -H 'Content-Type: application/json' \
@@ -386,7 +386,7 @@ curl -X POST localhost:4321/api/notes \
 ## Working on the code
 
 ```bash
-./build.sh          # build the web bundle into the binary, compile ./note
+./build.sh          # build the web bundle into the binary, compile ./nib
 go test ./...       # store and terminal UI behaviour
 go vet ./...
 ```
@@ -394,7 +394,7 @@ go vet ./...
 Developing the web UI with hot reload, against a running API:
 
 ```bash
-note --web &
+nib --web &
 npm --prefix client run dev     # http://localhost:5173
 ```
 

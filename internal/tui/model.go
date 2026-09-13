@@ -20,8 +20,8 @@ import (
 	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/prathmesh/notes/internal/store"
-	"github.com/prathmesh/notes/internal/web"
+	"github.com/Prathmeshgumal/nib/internal/store"
+	"github.com/Prathmeshgumal/nib/internal/web"
 )
 
 const sidebarWidth = 30
@@ -672,12 +672,26 @@ func commandExists(name string) bool {
 
 // DefaultPath puts the database next to the user's other application data.
 func DefaultPath() string {
+	if p := os.Getenv("NIB_DB"); p != "" {
+		return p
+	}
+	// The variable this shipped under before the program was renamed.
 	if p := os.Getenv("NOTES_DB"); p != "" {
 		return p
 	}
 	dir, err := os.UserHomeDir()
 	if err != nil {
-		return "notes.db"
+		return "nib.db"
+	}
+	return filepath.Join(dir, ".local", "share", "nib", "nib.db")
+}
+
+// LegacyPath is where notes lived when the program was called "note". Anyone
+// who used it before the rename still has their notes there.
+func LegacyPath() string {
+	dir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
 	}
 	return filepath.Join(dir, ".local", "share", "notes", "notes.db")
 }

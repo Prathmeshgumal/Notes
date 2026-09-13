@@ -36,7 +36,7 @@ func (m model) helpLine() string {
 }
 
 const helpText = `
-  Notes — keys
+  nib — keys
 
   Choosing a note
     j            next note
