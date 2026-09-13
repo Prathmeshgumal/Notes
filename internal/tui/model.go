@@ -306,6 +306,15 @@ func (m *model) startEdit(n *store.Note) {
 	m.title.Blur()
 	m.body.Focus()
 	m.body.CursorEnd()
+
+	// Opening a note longer than the editor would otherwise show the top while
+	// the caret sat invisibly at the end, and the first keystroke would jump.
+	// CursorEnd moves the caret but not the view; the textarea only repositions
+	// inside Update. Rendering once first is what makes that work — the
+	// textarea fills its viewport during View, and until it has content there
+	// is nothing for the reposition to scroll.
+	_ = m.body.View()
+	m.body, _ = m.body.Update(tea.KeyMsg{Type: tea.KeyEnd})
 }
 
 // bodyCursor is where the caret sits as an offset into the whole note.
@@ -314,28 +323,37 @@ func (m *model) bodyCursor() int {
 	return offsetAt(m.body.Value(), m.body.Line(), li.StartColumn+li.ColumnOffset)
 }
 
-// placeBodyCursor walks the caret to a logical row and column. The textarea
-// exposes no way to jump, so it is moved a line at a time from the top.
-func (m *model) placeBodyCursor(row, col int) {
-	for i := 0; i < 5000; i++ {
-		if m.body.Line() == 0 && m.body.LineInfo().RowOffset == 0 {
-			break
-		}
-		m.body.CursorUp()
-	}
+// currentLine returns the line the caret is on, and how far into it it sits.
+func (m *model) currentLine() (string, int) {
+	value := m.body.Value()
+	off := m.bodyCursor()
+	start, end := lineBounds(value, off)
+	return value[start:end], off - start
+}
+
+// replaceCurrentLine swaps the caret's line for a new one and leaves the caret
+// at column col of it.
+//
+// The obvious implementation — rewrite the whole note with SetValue — scrolls
+// the editor back to the top, because SetValue resets the textarea and its
+// scroll position cannot be restored from outside the package. Every formatting
+// action changes a single line, so the line is edited in place instead: go to
+// its start, delete forward to its end, type the replacement. The caret never
+// leaves the row, so the view stays where the writer left it.
+func (m *model) replaceCurrentLine(line string, col int) {
 	m.body.CursorStart()
-	for i := 0; i < 5000 && m.body.Line() < row; i++ {
-		m.body.CursorDown()
-	}
+	// ctrl+k is the textarea's own "delete through the end of the line".
+	m.body, _ = m.body.Update(tea.KeyMsg{Type: tea.KeyCtrlK})
+	m.body.InsertString(line)
+	m.body.CursorStart()
 	m.body.SetCursor(col)
 }
 
 // markBody applies Markdown emphasis around the word under the caret.
 func (m *model) markBody(open, close string) {
-	value, pos := mark(m.body.Value(), m.bodyCursor(), open, close)
-	m.body.SetValue(value)
-	row, col := rowColAt(value, pos)
-	m.placeBodyCursor(row, col)
+	line, col := m.currentLine()
+	next, pos := mark(line, col, open, close)
+	m.replaceCurrentLine(next, pos)
 }
 
 // renderDraft renders what is currently being written, so the preview shows
@@ -364,19 +382,27 @@ func (m *model) renderDraft() {
 	m.draft.GotoTop()
 }
 
-// applyLine runs one of the line-based formatting helpers on the body.
+// applyLine runs one of the line-based formatting helpers on the caret's line.
 func (m *model) applyLine(fn func(string, int) (string, int)) {
-	value, pos := fn(m.body.Value(), m.bodyCursor())
-	m.body.SetValue(value)
-	row, col := rowColAt(value, pos)
-	m.placeBodyCursor(row, col)
+	line, col := m.currentLine()
+	next, pos := fn(line, col)
+
+	// A horizontal rule is the one action that adds lines rather than changing
+	// the current one; the rest stay within it.
+	if strings.Contains(next, "\n") {
+		head, tail, _ := strings.Cut(next, "\n")
+		m.replaceCurrentLine(head, len(head))
+		m.body.CursorEnd()
+		m.body.InsertString("\n" + tail)
+		return
+	}
+	m.replaceCurrentLine(next, pos)
 }
 
 func (m *model) linkBody() {
-	value, pos := link(m.body.Value(), m.bodyCursor())
-	m.body.SetValue(value)
-	row, col := rowColAt(value, pos)
-	m.placeBodyCursor(row, col)
+	line, col := m.currentLine()
+	next, pos := link(line, col)
+	m.replaceCurrentLine(next, pos)
 }
 
 // confirmKind names what a pending yes/no question will do.

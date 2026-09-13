@@ -688,3 +688,68 @@ func TestEditorHasNoLineOrWidthCap(t *testing.T) {
 		t.Errorf("MaxWidth = %d, want 0 (unlimited)", m.body.MaxWidth)
 	}
 }
+
+// Formatting a word far down a long note must not scroll the editor back to
+// the top. Rewriting the whole note with SetValue did exactly that.
+func TestFormattingKeepsTheEditorWhereItIs(t *testing.T) {
+	m, st := newTestModel(t)
+	body := strings.Repeat("a line of an existing note\n", 120) + "target word here"
+	if _, err := st.Create("Long", body); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 24})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnter})
+
+	// Opening an existing note leaves the caret at the end, on the last line.
+	rowBefore := m.body.Line()
+	if rowBefore < 100 {
+		t.Fatalf("expected the caret near the end, it is on row %d", rowBefore)
+	}
+	viewBefore := stripANSI(m.body.View())
+	if !strings.Contains(viewBefore, "target word here") {
+		t.Fatalf("the last line is not on screen to begin with:\n%s", viewBefore)
+	}
+
+	m = press(m, tea.KeyMsg{Type: tea.KeyCtrlB})
+
+	if !strings.Contains(m.body.Value(), "**here**") {
+		t.Errorf("ctrl+b did not bold the word: %q", lastLine(m.body.Value()))
+	}
+	if got := m.body.Line(); got != rowBefore {
+		t.Errorf("the caret jumped from row %d to row %d", rowBefore, got)
+	}
+	if view := stripANSI(m.body.View()); !strings.Contains(view, "**here**") {
+		t.Errorf("the editor scrolled away from the edit:\n%s", view)
+	}
+}
+
+// The same for a line-based action.
+func TestLineFormattingKeepsTheEditorWhereItIs(t *testing.T) {
+	m, st := newTestModel(t)
+	body := strings.Repeat("filler line\n", 120) + "make me a heading"
+	if _, err := st.Create("Long", body); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 24})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnter})
+
+	rowBefore := m.body.Line()
+	m = press(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}, Alt: true})
+
+	if !strings.HasSuffix(m.body.Value(), "# make me a heading") {
+		t.Errorf("alt+h did not add the heading: %q", lastLine(m.body.Value()))
+	}
+	if got := m.body.Line(); got != rowBefore {
+		t.Errorf("the caret jumped from row %d to row %d", rowBefore, got)
+	}
+	if view := stripANSI(m.body.View()); !strings.Contains(view, "# make me a heading") {
+		t.Errorf("the editor scrolled away from the edit:\n%s", view)
+	}
+}
+
+func lastLine(s string) string {
+	parts := strings.Split(strings.TrimRight(s, "\n"), "\n")
+	return parts[len(parts)-1]
+}
