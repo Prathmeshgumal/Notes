@@ -1,7 +1,4 @@
 import { Router } from 'express';
-import { query } from '../db.js';
-
-const router = Router();
 
 const asyncRoute = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 
@@ -15,52 +12,39 @@ function deriveTitle(title, content) {
   return firstLine.replace(/^#+\s*/, '').trim().slice(0, 200) || 'Untitled';
 }
 
-// GET /api/notes?q=search
-router.get('/', asyncRoute(async (req, res) => {
-  const q = (req.query.q || '').trim();
-  const { rows } = q
-    ? await query(
-        `SELECT id, title, content, created_at, updated_at FROM notes
-         WHERE title ILIKE $1 OR content ILIKE $1
-         ORDER BY updated_at DESC`,
-        [`%${q}%`]
-      )
-    : await query(
-        `SELECT id, title, content, created_at, updated_at FROM notes
-         ORDER BY updated_at DESC`
-      );
-  res.json(rows);
-}));
+export default function notesRouter(store) {
+  const router = Router();
 
-router.get('/:id', asyncRoute(async (req, res) => {
-  const { rows } = await query('SELECT * FROM notes WHERE id = $1', [req.params.id]);
-  if (!rows[0]) return res.status(404).json({ error: 'Note not found' });
-  res.json(rows[0]);
-}));
+  router.get('/', asyncRoute(async (req, res) => {
+    res.json(await store.list((req.query.q || '').trim()));
+  }));
 
-router.post('/', asyncRoute(async (req, res) => {
-  const { title, content = '' } = req.body || {};
-  const { rows } = await query(
-    'INSERT INTO notes (title, content) VALUES ($1, $2) RETURNING *',
-    [deriveTitle(title, content), content]
-  );
-  res.status(201).json(rows[0]);
-}));
+  router.get('/:id', asyncRoute(async (req, res) => {
+    const note = await store.get(req.params.id);
+    if (!note) return res.status(404).json({ error: 'Note not found' });
+    res.json(note);
+  }));
 
-router.put('/:id', asyncRoute(async (req, res) => {
-  const { title, content = '' } = req.body || {};
-  const { rows } = await query(
-    'UPDATE notes SET title = $1, content = $2 WHERE id = $3 RETURNING *',
-    [deriveTitle(title, content), content, req.params.id]
-  );
-  if (!rows[0]) return res.status(404).json({ error: 'Note not found' });
-  res.json(rows[0]);
-}));
+  router.post('/', asyncRoute(async (req, res) => {
+    const { title, content = '' } = req.body || {};
+    res.status(201).json(await store.create({ title: deriveTitle(title, content), content }));
+  }));
 
-router.delete('/:id', asyncRoute(async (req, res) => {
-  const { rowCount } = await query('DELETE FROM notes WHERE id = $1', [req.params.id]);
-  if (!rowCount) return res.status(404).json({ error: 'Note not found' });
-  res.status(204).end();
-}));
+  router.put('/:id', asyncRoute(async (req, res) => {
+    const { title, content = '' } = req.body || {};
+    const note = await store.update(req.params.id, {
+      title: deriveTitle(title, content),
+      content,
+    });
+    if (!note) return res.status(404).json({ error: 'Note not found' });
+    res.json(note);
+  }));
 
-export default router;
+  router.delete('/:id', asyncRoute(async (req, res) => {
+    if (!(await store.remove(req.params.id)))
+      return res.status(404).json({ error: 'Note not found' });
+    res.status(204).end();
+  }));
+
+  return router;
+}

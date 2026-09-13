@@ -1,6 +1,15 @@
+# build output
+/notes
+client/dist/
+internal/web/dist/
 node_modules/
-dist/
+
+# local data and backups
 data/
 backups/
+*.db
+*.db-shm
+*.db-wal
+
 .env
 .DS_Store
