@@ -3,6 +3,7 @@ package store
 import (
 	"errors"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -195,5 +196,21 @@ func TestWelcomeNoteIsOnlyAddedOnce(t *testing.T) {
 	}
 	if got := len(mustListStore(t, st2)); got != 0 {
 		t.Errorf("a used database was re-seeded: %d notes", got)
+	}
+}
+
+// The welcome note is the first thing anyone reads, so it must not carry a
+// name the program no longer goes by.
+func TestWelcomeNoteUsesTheCurrentName(t *testing.T) {
+	if strings.Contains(welcomeTitle, "note") && !strings.Contains(welcomeTitle, "nib") {
+		t.Errorf("welcome title still says %q", welcomeTitle)
+	}
+	if !strings.Contains(welcomeBody, "nib") {
+		t.Error("the welcome note never mentions the program by name")
+	}
+	for _, stale := range []string{"Welcome to note", "$ note", "`note`"} {
+		if strings.Contains(welcomeBody, stale) {
+			t.Errorf("the welcome note still contains %q", stale)
+		}
 	}
 }

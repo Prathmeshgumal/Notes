@@ -2,9 +2,9 @@ package store
 
 // The note a brand-new database starts with. It is the first thing a reader
 // sees, so it doubles as a tour of what the editor understands.
-const welcomeTitle = "Welcome to note"
+const welcomeTitle = "Welcome to nib"
 
-const welcomeBody = `# Welcome to note
+const welcomeBody = `# Welcome to nib
 
 This is Markdown, the way GitHub Gists write it.
 
