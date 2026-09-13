@@ -90,3 +90,32 @@ func lastNonBlank(lines []string) string {
 	}
 	return ""
 }
+
+// stripDerivedTitle removes the opening line of a note when it is the line the
+// title was taken from, so the preview does not show the same text as both its
+// header and its first line. A title the writer typed explicitly leaves the
+// body untouched.
+func stripDerivedTitle(content, title string) string {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return content
+	}
+	lines := strings.Split(content, "\n")
+	for i, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue // leading blank lines
+		}
+		heading := strings.TrimSpace(strings.TrimLeft(line, "#"))
+		if heading != title {
+			return content
+		}
+		// Drop the line, plus the blank lines that followed it, so the body
+		// does not start with a gap where the heading used to be.
+		rest := lines[i+1:]
+		for len(rest) > 0 && strings.TrimSpace(rest[0]) == "" {
+			rest = rest[1:]
+		}
+		return strings.Join(rest, "\n")
+	}
+	return content
+}

@@ -188,7 +188,8 @@ func (m *model) renderPreview() {
 		m.rendered = map[string]string{}
 	}
 
-	out, err := m.renderer.Render(separateListGroups(n.Content))
+	body := stripDerivedTitle(n.Content, n.Title)
+	out, err := m.renderer.Render(separateListGroups(body))
 	if err != nil {
 		m.preview.SetContent(n.Content)
 		return

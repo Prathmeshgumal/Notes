@@ -109,3 +109,61 @@ func TestFillersFor(t *testing.T) {
 		}
 	}
 }
+
+func TestStripDerivedTitle(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		content string
+		title   string
+		want    string
+	}{
+		{
+			name:    "plain first line matching the title is dropped",
+			content: "14 sep Tasks\n\n- [ ] one\n",
+			title:   "14 sep Tasks",
+			want:    "- [ ] one\n",
+		},
+		{
+			name:    "heading matching the title is dropped",
+			content: "# Welcome\n\nbody text\n",
+			title:   "Welcome",
+			want:    "body text\n",
+		},
+		{
+			name:    "an explicit different title leaves the body alone",
+			content: "# Welcome\n\nbody text\n",
+			title:   "Something else",
+			want:    "# Welcome\n\nbody text\n",
+		},
+		{
+			name:    "a body that does not start with the title is untouched",
+			content: "- [ ] one\n- [ ] two\n",
+			title:   "My list",
+			want:    "- [ ] one\n- [ ] two\n",
+		},
+		{
+			name:    "leading blank lines are handled",
+			content: "\n\nNotes\n\ncontent\n",
+			title:   "Notes",
+			want:    "content\n",
+		},
+		{
+			name:    "a single-line note becomes empty",
+			content: "just this\n",
+			title:   "just this",
+			want:    "",
+		},
+		{
+			name:    "empty title changes nothing",
+			content: "anything\n",
+			title:   "",
+			want:    "anything\n",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := stripDerivedTitle(tc.content, tc.title); got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
