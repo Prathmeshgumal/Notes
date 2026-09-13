@@ -24,7 +24,15 @@ import (
 	"github.com/Prathmeshgumal/nib/internal/web"
 )
 
-const sidebarWidth = 30
+// The list sits in a box in the top-right corner, so the note itself gets the
+// rest of the screen. Narrower than the old full-height sidebar, which is where
+// the extra room for the note comes from.
+const (
+	asideWidth = 26
+	// What is known about the note is a fixed three lines, so it takes a small
+	// box at the top and the list of notes gets everything below it.
+	asideDetailRows = 3
+)
 
 type model struct {
 	st    *store.Store
@@ -185,7 +193,7 @@ func (m *model) layout() {
 	if paneHeight < 3 {
 		paneHeight = 3
 	}
-	previewWidth := m.width - sidebarWidth - 4
+	previewWidth := m.width - asideWidth - 4
 	if previewWidth < 20 {
 		previewWidth = 20
 	}

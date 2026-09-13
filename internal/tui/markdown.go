@@ -119,3 +119,19 @@ func stripDerivedTitle(content, title string) string {
 	}
 	return content
 }
+
+// countTasks reports how many task items a note has and how many are ticked,
+// for the details shown beside it.
+func countTasks(content string) (done, total int) {
+	for _, line := range strings.Split(content, "\n") {
+		m := taskPrefix.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		total++
+		if strings.ContainsAny(m[0], "xX") {
+			done++
+		}
+	}
+	return
+}

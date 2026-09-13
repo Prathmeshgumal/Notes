@@ -37,19 +37,16 @@ func (m model) listView() string {
 	}
 	inner := paneHeight - 2
 
-	sidebar := paneStyle.
-		Width(sidebarWidth).
-		Height(inner).
-		Render(m.sidebarContent(inner))
+	previewWidth := m.width - asideWidth - 4
+	if previewWidth < 20 {
+		previewWidth = 20
+	}
 
 	header := "Preview"
 	if n := m.selected(); n != nil {
 		header = n.Title
 	}
-	previewWidth := m.width - sidebarWidth - 4
-	if previewWidth < 20 {
-		previewWidth = 20
-	}
+
 	// The bar sits inside the pane, so the text is one column narrower than the
 	// pane. It stays blank when the whole note already fits.
 	scrolled := withScrollbar(
@@ -59,12 +56,30 @@ func (m model) listView() string {
 		m.preview.YOffset,
 	)
 
-	preview := focusedPane.
+	note := focusedPane.
 		Width(previewWidth).
 		Height(inner).
 		Render(titleStyle.Render(truncate(header, previewWidth-4)) + "\n" + scrolled)
 
-	body := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, preview)
+	// The right-hand column: a small box of facts about the note being read,
+	// and the list of notes filling everything beneath it.
+	listRows := inner - asideDetailRows - 2
+	if listRows < 3 {
+		listRows = 3
+	}
+
+	details := paneStyle.
+		Width(asideWidth).
+		Height(asideDetailRows).
+		Render(m.asideDetails())
+
+	list := paneStyle.
+		Width(asideWidth).
+		Height(listRows).
+		Render(m.asideList(listRows))
+
+	aside := lipgloss.JoinVertical(lipgloss.Left, details, list)
+	body := lipgloss.JoinHorizontal(lipgloss.Top, note, aside)
 
 	if m.mode == modeSearch {
 		return body + "\n" + m.search.View() + "\n" + helpStyle.Render(" "+m.helpLine())
@@ -72,33 +87,32 @@ func (m model) listView() string {
 	return body + "\n" + m.footer()
 }
 
-func (m model) sidebarContent(height int) string {
+// asideList is the note list as it appears in the top-right box.
+func (m model) asideList(rows int) string {
 	if len(m.notes) == 0 {
 		empty := "No notes yet."
 		if m.search.Value() != "" {
 			empty = "Nothing matches."
 		}
-		return titleStyle.Render("Notes") + "\n\n" + dimStyle.Render("  "+empty)
+		return titleStyle.Render("Notes") + "\n\n" + dimStyle.Render(" "+empty)
 	}
-
-	head := titleStyle.Render(fmt.Sprintf("Notes (%d)", len(m.notes)))
-	rows := height - 2 // header + blank line
-	if rows < 1 {
-		rows = 1
-	}
-
-	// Keep the cursor on screen by scrolling the window of visible rows.
-	start := 0
-	if m.cursor >= rows {
-		start = m.cursor - rows + 1
-	}
-	end := min(start+rows, len(m.notes))
 
 	var b strings.Builder
-	b.WriteString(head + "\n\n")
+	b.WriteString(titleStyle.Render(fmt.Sprintf("Notes (%d)", len(m.notes))) + "\n")
+
+	visible := rows - 1
+	if visible < 1 {
+		visible = 1
+	}
+	// Keep the cursor in view by sliding the window of titles.
+	start := 0
+	if m.cursor >= visible {
+		start = m.cursor - visible + 1
+	}
+	end := min(start+visible, len(m.notes))
+
 	for i := start; i < end; i++ {
-		n := m.notes[i]
-		label := truncate(n.Title, sidebarWidth-4)
+		label := truncate(m.notes[i].Title, asideWidth-5)
 		if i == m.cursor {
 			b.WriteString(cursorStyle.Render("▸ ") + selectedStyle.Render(label))
 		} else {
@@ -109,6 +123,32 @@ func (m model) sidebarContent(height int) string {
 		}
 	}
 	return b.String()
+}
+
+// asideDetails is the small box at the top of the right-hand column: three
+// lines of fact about the note being read, each a label and a value.
+func (m model) asideDetails() string {
+	n := m.selected()
+	if n == nil {
+		return dimStyle.Render("Nothing selected.")
+	}
+
+	row := func(label, value string) string {
+		return dimStyle.Render(fmt.Sprintf("%-7s", label)) + " " +
+			truncate(value, asideWidth-12)
+	}
+
+	tasks := "none"
+	if done, total := countTasks(n.Content); total > 0 {
+		tasks = fmt.Sprintf("%d of %d done", done, total)
+	}
+
+	words := len(strings.Fields(n.Content))
+	return strings.Join([]string{
+		row("Edited", relativeTime(n.UpdatedAt)),
+		row("Tasks", tasks),
+		row("Length", fmt.Sprintf("%d words", words)),
+	}, "\n")
 }
 
 func (m model) editView() string {

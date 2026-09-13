@@ -262,3 +262,75 @@ func TestHelpMentionsTheListBehaviour(t *testing.T) {
 		}
 	}
 }
+
+// The list moved to a box in the top-right so the note gets the rest of the
+// screen; the corner beneath it carries what is known about the note.
+func TestAsideLayout(t *testing.T) {
+	m, st := newTestModel(t)
+	if _, err := st.Create("Tasks", "- [x] one\n- [x] two\n- [ ] three\nsome words here"); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 96, Height: 24})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	view := stripANSI(m.View())
+	lines := strings.Split(view, "\n")
+
+	// The note's own title should sit far to the left, the list far to the right.
+	var titleCol, listCol int = -1, -1
+	for _, l := range lines {
+		if i := strings.Index(l, "Tasks"); i >= 0 && titleCol < 0 {
+			titleCol = len([]rune(l[:i]))
+		}
+		if i := strings.Index(l, "Notes ("); i >= 0 && listCol < 0 {
+			listCol = len([]rune(l[:i]))
+		}
+	}
+	if titleCol < 0 || listCol < 0 {
+		t.Fatalf("could not find both panes:\n%s", view)
+	}
+	if listCol <= titleCol {
+		t.Errorf("the note list is at column %d, left of the note at %d", listCol, titleCol)
+	}
+
+	for _, want := range []string{"Edited", "Tasks", "2 of 3 done", "Length"} {
+		if !strings.Contains(view, want) {
+			t.Errorf("the details box is missing %q:\n%s", want, view)
+		}
+	}
+
+	// The facts sit above the list, not below it.
+	factsRow, listRow := -1, -1
+	for i, l := range lines {
+		if strings.Contains(l, "Edited") && factsRow < 0 {
+			factsRow = i
+		}
+		if strings.Contains(l, "Notes (") && listRow < 0 {
+			listRow = i
+		}
+	}
+	if factsRow < 0 || listRow < 0 {
+		t.Fatalf("could not find both right-hand boxes:\n%s", view)
+	}
+	if factsRow > listRow {
+		t.Errorf("the facts box is below the list (rows %d vs %d)", factsRow, listRow)
+	}
+}
+
+func TestCountTasks(t *testing.T) {
+	for _, tc := range []struct {
+		in          string
+		done, total int
+	}{
+		{"- [x] a\n- [ ] b", 1, 2},
+		{"- [X] a\n- [x] b", 2, 2},
+		{"   - [ ] nested", 0, 1},
+		{"no tasks here", 0, 0},
+		{"- a plain bullet", 0, 0},
+	} {
+		d, n := countTasks(tc.in)
+		if d != tc.done || n != tc.total {
+			t.Errorf("countTasks(%q) = (%d,%d), want (%d,%d)", tc.in, d, n, tc.done, tc.total)
+		}
+	}
+}
