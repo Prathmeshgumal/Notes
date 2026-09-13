@@ -1,0 +1,43 @@
+name: notes
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: notes
+      POSTGRES_PASSWORD: notes
+      POSTGRES_DB: notes
+    volumes:
+      # Your notes live here, in a folder you can see, copy and back up.
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notes -d notes"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # No ports: the database is reachable only from the other containers.
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://notes:notes@db:5432/notes
+      PORT: 4000
+    depends_on:
+      db:
+        condition: service_healthy
+    # No ports: the API is reachable only through the web container.
+
+  web:
+    build:
+      context: ./client
+    restart: unless-stopped
+    ports:
+      # 127.0.0.1 means this machine only: nothing is exposed to your network.
+      - "127.0.0.1:${NOTES_PORT:-8080}:80"
+    depends_on:
+      server:
+        condition: service_healthy

@@ -1,0 +1,180 @@
+import { useEffect, useRef, useState } from 'react';
+import {
+  Bold,
+  Code,
+  Heading,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  ListTodo,
+  Minus,
+  Quote,
+  Save,
+  SquareCode,
+  Strikethrough,
+  Trash2,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { DeleteNoteDialog } from '@/components/DeleteNoteDialog';
+import { actions } from '@/lib/editorActions';
+import { renderMarkdown } from '@/lib/markdown';
+
+const TOOLBAR = [
+  [
+    { key: 'heading', icon: Heading, label: 'Heading' },
+    { key: 'bold', icon: Bold, label: 'Bold', hint: 'Ctrl+B' },
+    { key: 'italic', icon: Italic, label: 'Italic', hint: 'Ctrl+I' },
+    { key: 'strike', icon: Strikethrough, label: 'Strikethrough' },
+  ],
+  [
+    { key: 'quote', icon: Quote, label: 'Blockquote' },
+    { key: 'code', icon: Code, label: 'Inline code' },
+    { key: 'codeBlock', icon: SquareCode, label: 'Code block' },
+    { key: 'link', icon: Link2, label: 'Link', hint: 'Ctrl+K' },
+  ],
+  [
+    { key: 'bullet', icon: List, label: 'Bulleted list' },
+    { key: 'numbered', icon: ListOrdered, label: 'Numbered list' },
+    { key: 'task', icon: ListTodo, label: 'Task list' },
+    { key: 'hr', icon: Minus, label: 'Horizontal rule' },
+  ],
+];
+
+export default function Editor({ note, onChange, onSave, onDelete, saving, dirty }) {
+  const [tab, setTab] = useState('write');
+  const textareaRef = useRef(null);
+
+  const apply = (key) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const next = actions[key]({
+      value: note.content,
+      start: el.selectionStart,
+      end: el.selectionEnd,
+    });
+    onChange({ ...note, content: next.value });
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(next.start, next.end);
+    });
+  };
+
+  const onKeyDown = (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (!mod) return;
+    const key = e.key.toLowerCase();
+    if (key === 's') {
+      e.preventDefault();
+      onSave();
+      return;
+    }
+    const shortcut = { b: 'bold', i: 'italic', k: 'link' }[key];
+    if (shortcut) {
+      e.preventDefault();
+      apply(shortcut);
+    }
+  };
+
+  // Always land on Write when a different note opens.
+  useEffect(() => setTab('write'), [note.id]);
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Input
+          value={note.title}
+          placeholder="Note title…"
+          className="h-10 flex-1 border-0 bg-transparent px-0 text-lg font-semibold shadow-none focus-visible:ring-0 md:text-lg"
+          onChange={(e) => onChange({ ...note, title: e.target.value })}
+        />
+        <div className="flex items-center gap-2">
+          {dirty && (
+            <Badge variant="secondary" className="text-muted-foreground">
+              Unsaved
+            </Badge>
+          )}
+          <Button onClick={onSave} disabled={saving || !dirty}>
+            <Save /> {saving ? 'Saving…' : note.id ? 'Save' : 'Create'}
+          </Button>
+          {note.id && (
+            <DeleteNoteDialog title={note.title} onConfirm={() => onDelete(note.id)}>
+              <Button variant="outline" size="icon" aria-label="Delete note">
+                <Trash2 className="text-destructive" />
+              </Button>
+            </DeleteNoteDialog>
+          )}
+        </div>
+      </div>
+
+      <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
+        <TabsList>
+          <TabsTrigger value="write">Write</TabsTrigger>
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="write" className="flex min-h-0 flex-col gap-2">
+          <div className="bg-muted/50 flex flex-wrap items-center gap-0.5 rounded-lg border p-1">
+            {TOOLBAR.map((group, i) => (
+              <div key={i} className="flex items-center gap-0.5">
+                {i > 0 && <Separator orientation="vertical" className="mx-1.5 !h-5" />}
+                {group.map(({ key, icon: Icon, label, hint }) => (
+                  <Tooltip key={key}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={label}
+                        onClick={() => apply(key)}
+                      >
+                        <Icon />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {label}
+                      {hint && <span className="opacity-60"> · {hint}</span>}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          <Textarea
+            ref={textareaRef}
+            value={note.content}
+            placeholder="Write your note in Markdown…"
+            onChange={(e) => onChange({ ...note, content: e.target.value })}
+            onKeyDown={onKeyDown}
+            spellCheck
+            className="min-h-0 flex-1 resize-none font-mono text-[13px] leading-relaxed"
+          />
+
+          <p className="text-muted-foreground text-xs">
+            Markdown supported · <kbd className="font-mono">Ctrl+S</kbd> to save
+          </p>
+        </TabsContent>
+
+        <TabsContent
+          value="preview"
+          className="min-h-0 overflow-y-auto rounded-lg border p-5"
+        >
+          {note.content.trim() ? (
+            <article
+              className="prose prose-zinc dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(note.content) }}
+            />
+          ) : (
+            <p className="text-muted-foreground text-sm">Nothing to preview yet.</p>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
