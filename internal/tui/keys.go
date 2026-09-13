@@ -22,7 +22,7 @@ func (m model) helpLine() string {
 	case modeHelp:
 		return "any key to close"
 	default:
-		return "j/k move   ↵ edit   n new   / search   d delete   u undo   w web   ? help   q quit"
+		return "j/k move  ↵ edit  n new  / search  o link  d trash  u undo  w web  ? help  q quit"
 	}
 }
 
@@ -43,6 +43,7 @@ const helpText = `
     esc          cancel
 
   Other
+    o            open a link from this note (again for the next one)
     d            move to trash (asks first)
     u            undo the last delete
     w            start the web UI and open a browser

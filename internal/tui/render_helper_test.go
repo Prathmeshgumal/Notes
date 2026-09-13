@@ -47,3 +47,20 @@ func renderedBlankLines(t *testing.T, md string) int {
 	}
 	return n
 }
+
+// renderToPlain renders Markdown and strips the colour codes.
+func renderToPlain(t *testing.T, md string) string {
+	t.Helper()
+	r, err := glamour.NewTermRenderer(
+		glamour.WithStandardStyle("dark"),
+		glamour.WithWordWrap(70),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := r.Render(md)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ansiCodes.ReplaceAllString(out, "")
+}

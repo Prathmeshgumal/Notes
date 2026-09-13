@@ -145,11 +145,13 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "j", "down":
 		if m.cursor < len(m.notes)-1 {
 			m.cursor++
+			m.linkCursor = 0
 			m.renderPreview()
 		}
 	case "k", "up":
 		if m.cursor > 0 {
 			m.cursor--
+			m.linkCursor = 0
 			m.renderPreview()
 		}
 	case "g":
@@ -180,6 +182,8 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.selected() != nil {
 			m.mode = modeConfirm
 		}
+	case "o":
+		return m, m.openLink()
 	case "w":
 		return m, m.toggleWeb()
 	case "u":

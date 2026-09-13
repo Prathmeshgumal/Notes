@@ -46,6 +46,7 @@ type model struct {
 
 	lastDeleted string // id of the most recent delete, for undo
 	keepID      string // note to keep selected across the next reload
+	linkCursor  int    // which link 'o' opens next, within the selected note
 
 	// Rendering Markdown is the expensive part of moving the cursor, so the
 	// renderer is built once per width and the output cached per note.
@@ -189,7 +190,7 @@ func (m *model) renderPreview() {
 		m.rendered = map[string]string{}
 	}
 
-	body := stripDerivedTitle(n.Content, n.Title)
+	body := hideLinkTargets(stripDerivedTitle(n.Content, n.Title))
 	out, err := m.renderer.Render(separateListGroups(body))
 	if err != nil {
 		m.preview.SetContent(n.Content)
@@ -296,6 +297,31 @@ func fallbackEditor() string {
 		}
 	}
 	return ""
+}
+
+// openLink opens the note's links one after another, since a terminal cannot
+// click the text the way a browser can.
+func (m *model) openLink() tea.Cmd {
+	n := m.selected()
+	if n == nil {
+		return nil
+	}
+	links := Links(n.Content)
+	if len(links) == 0 {
+		return flash("No links in this note")
+	}
+	if m.linkCursor >= len(links) {
+		m.linkCursor = 0
+	}
+	url := links[m.linkCursor]
+	openBrowser(url)
+
+	msg := "Opened " + url
+	if len(links) > 1 {
+		msg += fmt.Sprintf("  (%d of %d — press o for the next)", m.linkCursor+1, len(links))
+	}
+	m.linkCursor++
+	return flash(msg)
 }
 
 func (m *model) toggleWeb() tea.Cmd {
