@@ -14,17 +14,9 @@ nothing running in the background.
 
 </div>
 
-```
-╭ Notes (4) ───────────────╮╭ 14 sep Tasks ────────────────────────────────╮
-│                          ││                                              │
-│ ▸ 14 sep Tasks           ││  • [✓] Solve 10 DSA questions                │
-│   13 sep Daily standup   ││  • [ ] Prepare resume                        │
-│   Reading list           ││    • [ ] Review the skills                   │
-│   Meeting notes          ││  • [ ] Go for a run                          │
-│                          ││                                              │
-╰──────────────────────────╯╰──────────────────────────────────────────────╯
- j/k move  ↵ edit  n new  / search  o link  d trash  w web  ? help  q quit
-```
+<div align="center">
+  <img src="docs/screenshot.svg" alt="note running in a terminal: a list of notes on the left, the selected note rendered as Markdown on the right, with a keybinding bar along the bottom" width="820">
+</div>
 
 Press `w` and the same notes open in a browser with a formatting toolbar and live
 preview. Both stay open at once, backed by the same file.
