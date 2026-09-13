@@ -75,9 +75,10 @@ Press `w` in the terminal, or run it on its own:
 note --web          # http://localhost:4321
 ```
 
-Same notes, same moment — both can be open at once. The browser adds a
-formatting toolbar, live preview and a light/dark theme. It binds to
-`127.0.0.1`, so nothing else on your network can reach it.
+Same notes, same moment — both can be open at once. Everything the terminal can
+do the browser can too, including the trash: restore, delete for good and empty.
+The browser adds a formatting toolbar, live preview and a light/dark theme. It
+binds to `127.0.0.1`, so nothing else on your network can reach it.
 
 ## Your notes
 

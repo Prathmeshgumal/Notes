@@ -1,9 +1,11 @@
-import { FileText, NotebookPen, Plus, Search } from 'lucide-react';
+import { FileText, NotebookPen, Plus, Search, Trash2, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from '@/components/mode-toggle';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 import { relativeTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 
@@ -15,7 +17,18 @@ function excerpt(content) {
   return line ? line.slice(0, 90) : 'Empty note';
 }
 
-export default function NoteList({ notes, selectedId, onSelect, onNew, query, onQuery }) {
+export default function NoteList({
+  notes,
+  selectedId,
+  onSelect,
+  onNew,
+  query,
+  onQuery,
+  trashCount,
+  onOpenTrash,
+  canUndo,
+  onUndo,
+}) {
   return (
     <aside className="bg-muted/40 flex w-full shrink-0 flex-col border-r md:w-80">
       <div className="flex items-center justify-between gap-2 px-4 py-3.5">
@@ -74,8 +87,41 @@ export default function NoteList({ notes, selectedId, onSelect, onNew, query, on
       </ScrollArea>
 
       <Separator />
-      <div className="text-muted-foreground px-4 py-2.5 text-xs">
-        {notes.length} {notes.length === 1 ? 'note' : 'notes'}
+      <div className="flex items-center justify-between gap-2 px-3 py-2">
+        <span className="text-muted-foreground pl-1 text-xs">
+          {notes.length} {notes.length === 1 ? 'note' : 'notes'}
+        </span>
+        <div className="flex items-center gap-1">
+          {canUndo && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon-sm" onClick={onUndo} aria-label="Undo delete">
+                  <Undo2 />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Undo delete</TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onOpenTrash}
+                aria-label="Open the trash"
+                className="text-muted-foreground gap-1.5"
+              >
+                <Trash2 />
+                {trashCount > 0 && (
+                  <Badge variant="secondary" className="px-1.5 py-0 text-[11px]">
+                    {trashCount}
+                  </Badge>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Trash</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
     </aside>
   );

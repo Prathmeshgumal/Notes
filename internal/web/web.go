@@ -56,8 +56,64 @@ func (s *Server) routes() http.Handler {
 	})
 	mux.HandleFunc("/api/notes", s.handleCollection)
 	mux.HandleFunc("/api/notes/", s.handleItem)
+	mux.HandleFunc("/api/trash", s.handleTrash)
+	mux.HandleFunc("/api/trash/", s.handleTrashItem)
 	mux.Handle("/", s.staticHandler())
 	return mux
+}
+
+// handleTrash lists what is recoverable, or empties the trash outright.
+func (s *Server) handleTrash(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		notes, err := s.store.Trash()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, notes)
+	case http.MethodDelete:
+		n, err := s.store.EmptyTrash()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]int{"deleted": n})
+	default:
+		w.Header().Set("Allow", "GET, DELETE")
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleTrashItem restores a single trashed note, or destroys it.
+func (s *Server) handleTrashItem(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/trash/")
+	if id == "" || strings.Contains(id, "/") {
+		http.NotFound(w, r)
+		return
+	}
+	switch r.Method {
+	case http.MethodPost:
+		if err := s.store.Restore(id); err != nil {
+			notFoundOr(w, err)
+			return
+		}
+		note, err := s.store.Get(id)
+		if err != nil {
+			notFoundOr(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, note)
+	case http.MethodDelete:
+		if err := s.store.Purge(id); err != nil {
+			notFoundOr(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		w.Header().Set("Allow", "POST, DELETE")
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 // staticHandler serves the embedded bundle, falling back to index.html so
