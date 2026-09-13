@@ -15,7 +15,8 @@ export default defineConfig({
     watch: { usePolling: true },
     proxy: {
       '/api': {
-        target: process.env.VITE_API_PROXY || 'http://127.0.0.1:4000',
+        // The port `note --web` listens on.
+        target: process.env.VITE_API_PROXY || 'http://127.0.0.1:4321',
         changeOrigin: true,
       },
     },

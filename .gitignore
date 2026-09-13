@@ -4,12 +4,12 @@ client/dist/
 internal/web/dist/
 node_modules/
 
-# local data and backups
-data/
-backups/
+# local data — never publish notes
+/backups/
+/data/
+*.sql
 *.db
 *.db-shm
 *.db-wal
 
-.env
 .DS_Store
