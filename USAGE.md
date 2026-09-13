@@ -172,6 +172,16 @@ GitHub-flavoured Markdown:
 Fenced code blocks work too, written with three backticks or three tildes.
 
 A single newline is a line break, as in GitHub Gists — you don't need two.
+Both the terminal and the browser treat it the same way.
+
+**Tables need their separator row.** A header row alone isn't a table; the
+`|---|` line under it is what makes one:
+
+~~~markdown
+| col1 | col2 | col3 |
+| ---- | ---- | ---- |
+| 10   | 20   | 30   |
+~~~
 
 **Blank lines between groups of bullets are kept.** Markdown normally collapses
 them, so the app restores the gap in the preview. Runs come out as 1, 3, 5, 7…

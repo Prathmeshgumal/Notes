@@ -178,10 +178,7 @@ func (m *model) renderPreview() {
 	}
 
 	if m.renderer == nil || m.rendererWidth != width {
-		r, err := glamour.NewTermRenderer(
-			glamour.WithStyles(markedUpStyle(m.glamourStyle)),
-			glamour.WithWordWrap(width-2),
-		)
+		r, err := newRenderer(m.glamourStyle, width-2)
 		if err != nil {
 			m.preview.SetContent(n.Content)
 			return
@@ -203,6 +200,18 @@ func (m *model) renderPreview() {
 	m.rendered[n.ID+"\x00"+n.UpdatedAt] = out
 	m.preview.SetContent(out)
 	m.preview.GotoTop()
+}
+
+// newRenderer builds the Markdown renderer the preview uses. Tests render
+// through this too, so what they assert on is what the reader sees.
+func newRenderer(style string, width int) (*glamour.TermRenderer, error) {
+	return glamour.NewTermRenderer(
+		glamour.WithStyles(markedUpStyle(style)),
+		glamour.WithWordWrap(width),
+		// A single newline is a line break, as in a Gist and as in this app's
+		// own web UI. Without this the renderer joins the lines into one.
+		glamour.WithPreservedNewLines(),
+	)
 }
 
 // markedUpStyle is the renderer's own style with link text tagged, so the

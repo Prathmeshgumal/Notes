@@ -4,8 +4,6 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-
-	"github.com/charmbracelet/glamour"
 )
 
 var ansiCodes = regexp.MustCompile(`\x1b\[[0-9;]*m`)
@@ -14,10 +12,7 @@ var ansiCodes = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 // and second list group, which is the spacing the reader actually sees.
 func renderedBlankLines(t *testing.T, md string) int {
 	t.Helper()
-	r, err := glamour.NewTermRenderer(
-		glamour.WithStandardStyle("dark"),
-		glamour.WithWordWrap(60),
-	)
+	r, err := newRenderer("dark", 60)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,10 +46,7 @@ func renderedBlankLines(t *testing.T, md string) int {
 // renderToPlain renders Markdown and strips the colour codes.
 func renderToPlain(t *testing.T, md string) string {
 	t.Helper()
-	r, err := glamour.NewTermRenderer(
-		glamour.WithStandardStyle("dark"),
-		glamour.WithWordWrap(70),
-	)
+	r, err := newRenderer("dark", 70)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,10 +61,7 @@ func renderToPlain(t *testing.T, md string) string {
 // uses, so link text can be located afterwards.
 func renderWithMarkers(t *testing.T, md string) string {
 	t.Helper()
-	r, err := glamour.NewTermRenderer(
-		glamour.WithStyles(markedUpStyle("dark")),
-		glamour.WithWordWrap(70),
-	)
+	r, err := newRenderer("dark", 70)
 	if err != nil {
 		t.Fatal(err)
 	}

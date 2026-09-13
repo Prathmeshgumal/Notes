@@ -167,3 +167,35 @@ func TestStripDerivedTitle(t *testing.T) {
 		})
 	}
 }
+
+// A single newline breaks the line, matching this app's web UI and Gists.
+// Without this the renderer runs consecutive lines together into a paragraph.
+func TestSingleNewlineBreaksTheLine(t *testing.T) {
+	out := renderToPlain(t, "first line\nsecond line\n")
+	lines := []string{}
+	for _, l := range strings.Split(out, "\n") {
+		if strings.TrimSpace(l) != "" {
+			lines = append(lines, strings.TrimSpace(l))
+		}
+	}
+	if len(lines) != 2 {
+		t.Fatalf("expected two lines, got %d:\n%q", len(lines), out)
+	}
+	if lines[0] != "first line" || lines[1] != "second line" {
+		t.Errorf("lines were not kept apart: %q", lines)
+	}
+}
+
+func TestTableNeedsItsSeparatorRow(t *testing.T) {
+	withSep := renderToPlain(t, "|col1|col2|\n|----|----|\n|10  |20  |\n")
+	if !strings.Contains(withSep, "│") {
+		t.Errorf("a table with a separator row should render as a table:\n%s", withSep)
+	}
+
+	// Without the separator row it is not a table in GitHub-flavoured Markdown,
+	// and stays plain text. Asserted so the behaviour is documented, not lost.
+	without := renderToPlain(t, "|col1|col2|\n|10  |20  |\n")
+	if strings.Contains(without, "│") {
+		t.Errorf("without a separator row this should not become a table:\n%s", without)
+	}
+}
