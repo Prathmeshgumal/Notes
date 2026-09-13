@@ -44,6 +44,11 @@ func main() {
 	}
 	defer st.Close()
 
+	// A brand-new database opens on a welcome note rather than an empty screen.
+	if err := st.SeedIfEmpty(); err != nil {
+		fmt.Fprintln(os.Stderr, "warning: could not add the welcome note:", err)
+	}
+
 	if *webOnly {
 		runWeb(st, *port)
 		return

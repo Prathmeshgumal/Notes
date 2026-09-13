@@ -148,3 +148,52 @@ func titles(notes []Note) []string {
 	}
 	return out
 }
+
+// A brand-new database should not open on an empty screen.
+func TestNewDatabaseGetsAWelcomeNote(t *testing.T) {
+	st := newTestStore(t)
+	if err := st.SeedIfEmpty(); err != nil {
+		t.Fatal(err)
+	}
+	notes, err := st.List("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(notes) != 1 {
+		t.Fatalf("a new database holds %d notes, want 1", len(notes))
+	}
+	if notes[0].Title != welcomeTitle {
+		t.Errorf("title = %q, want the welcome note", notes[0].Title)
+	}
+}
+
+// Reopening must not add it again, and neither must a database whose notes
+// have all been deleted — that is a used database, not a new one.
+func TestWelcomeNoteIsOnlyAddedOnce(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "notes.db")
+
+	st, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SeedIfEmpty(); err != nil {
+		t.Fatal(err)
+	}
+	notes := mustListStore(t, st)
+	if err := st.Delete(notes[0].ID); err != nil {
+		t.Fatal(err)
+	}
+	st.Close()
+
+	st2, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st2.Close()
+	if err := st2.SeedIfEmpty(); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(mustListStore(t, st2)); got != 0 {
+		t.Errorf("a used database was re-seeded: %d notes", got)
+	}
+}
