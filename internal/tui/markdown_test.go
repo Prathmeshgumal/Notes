@@ -205,7 +205,7 @@ func TestTableNeedsItsSeparatorRow(t *testing.T) {
 func TestTaskLinesShowBulletThenCheckbox(t *testing.T) {
 	out := renderToPlain(t, "- [x] done\n- [ ] open\n- plain bullet\n")
 
-	for _, want := range []string{"• [x] done", "• [ ] open", "• plain bullet"} {
+	for _, want := range []string{"• [✓] done", "• [ ] open", "• plain bullet"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
@@ -214,7 +214,7 @@ func TestTaskLinesShowBulletThenCheckbox(t *testing.T) {
 
 func TestCheckboxesUseAsciiBoxes(t *testing.T) {
 	out := renderToPlain(t, "- [x] done\n- [ ] open\n")
-	if !strings.Contains(out, "[x] done") {
+	if !strings.Contains(out, "[✓] done") {
 		t.Errorf("a completed task should show a ticked box:\n%s", out)
 	}
 	if !strings.Contains(out, "[ ] open") {

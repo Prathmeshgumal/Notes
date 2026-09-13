@@ -211,10 +211,11 @@ Both the terminal and the browser treat it the same way.
 | 10   | 20   | 30   |
 ~~~
 
-**Task lists carry a bullet and a box**, `• [ ]` and `• [x]`, with a green tick
-on finished items. This departs from GitHub, which hides the bullet and shows
-only the checkbox. The box is ASCII rather than `☐`/`☑` because a font missing
-those glyphs substitutes a wider one, which swallows the space after the box.
+**Task lists carry a bullet and a box**, `• [ ]` open and `• [✓]` done, the
+check in green. This departs from GitHub, which hides the bullet and shows only
+the checkbox. The brackets are ASCII because common monospace fonts do not
+carry `☐`/`☑`, and the substituted glyph is drawn wider, which swallows the
+space after the box.
 
 **Blank lines between groups of bullets are kept.** Markdown normally collapses
 them, so the app restores the gap in the preview. Runs come out as 1, 3, 5, 7…

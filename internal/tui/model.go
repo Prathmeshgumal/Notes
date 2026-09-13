@@ -246,13 +246,13 @@ func markedUpStyle(name string) ansi.StyleConfig {
 	// and a checkbox second. The cost is that task text sits two columns right
 	// of plain bullet text, since the line carries two markers rather than one.
 	//
-	// The box is drawn in ASCII rather than ☐/☑. Those are narrow by the
-	// Unicode tables, but a monospace font that lacks them falls back to one
-	// that draws them wide, which swallows the following space and leaves the
-	// tick cramped. Brackets cannot be substituted, and colouring the tick is
-	// what makes a finished task read at a glance. The escape is written into
-	// the marker because glamour renders a task prefix with the surrounding
-	// block's style, so the Task style's own colour never reaches it.
+	// The box is drawn with ASCII brackets rather than ☐/☑. Those are narrow
+	// by the Unicode tables, but common monospace fonts do not carry them, and
+	// the substituted glyph is drawn wide, which swallows the space after the
+	// box. Brackets cannot be substituted, and a green ✓ inside makes a
+	// finished task read at a glance. The escape is written into the marker
+	// because glamour renders a task prefix with the surrounding block's
+	// style, so the Task style's own colour never reaches it.
 	cfg.Task.Ticked = "• [" + tickMark + "] "
 	cfg.Task.Unticked = "• [ ] "
 

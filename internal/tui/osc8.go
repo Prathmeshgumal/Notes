@@ -81,7 +81,10 @@ func stripMarkers(s string) string {
 	return strings.NewReplacer(linkOpenMarker, "", linkCloseMarker, "").Replace(s)
 }
 
-// tickMark is the "x" inside a finished task's box, in bold green so a
-// completed line is obvious at a glance. It is one printable cell wide, so a
-// ticked and an unticked box occupy the same space.
-const tickMark = "\x1b[1;32mx\x1b[0m"
+// tickMark is what sits inside a finished task's box: a green check, since a
+// cross reads as cancelled rather than done. U+2713 is used in preference to
+// the heavier ✔ or the ready-made ☑ because it is the one of the three that
+// common monospace fonts actually carry — a missing glyph is substituted from
+// another font, which draws it wider and swallows the space after the box.
+// It is one printable cell, so ticked and unticked boxes align.
+const tickMark = "\x1b[1;32m✓\x1b[0m"
