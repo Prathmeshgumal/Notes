@@ -66,8 +66,8 @@ const helpText = `
     esc          cancel
 
   Formatting, while editing the body
-    ctrl+b       bold          alt+8    bulleted list
-    alt+i        italic        alt+7    numbered list
+    ctrl+b       bold          alt+l    bulleted list
+    alt+i        italic        alt+o    ordered (numbered) list
     alt+s        strikethrough alt+t    task list
     alt+c        inline code   alt+x    tick / untick a task
     alt+f        code block    alt+r    horizontal rule
@@ -75,7 +75,9 @@ const helpText = `
     alt+q        blockquote
 
     Most are alt+ because a terminal spends the control range on its own
-    codes: ctrl+i is Tab, ctrl+h is Backspace, ctrl+m is Enter.
+    codes: ctrl+i is Tab, ctrl+h is Backspace, ctrl+m is Enter. They are
+    letters rather than digits because terminals bind alt+1..9 to switching
+    tabs, so a digit never reaches a program running inside one.
 
   Other
     o            open a link from this note (again for the next one)

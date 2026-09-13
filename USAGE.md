@@ -117,8 +117,8 @@ While editing:
 | `ctrl+k` | Link, cursor ready for the address |
 | `alt+h` | Heading — press again for a deeper one |
 | `alt+q` | Blockquote |
-| `alt+8` | Bulleted list |
-| `alt+7` | Numbered list |
+| `alt+l` | Bulleted list |
+| `alt+o` | Ordered (numbered) list |
 | `alt+t` | Task list |
 | `alt+x` | Tick or untick the task under the cursor |
 | `alt+r` | Horizontal rule |
@@ -135,6 +135,11 @@ again, and the list types convert between each other rather than stacking.
 Most are `alt+` because a terminal spends the control range on its own codes:
 **`ctrl+i` is Tab**, `ctrl+h` is Backspace and `ctrl+m` is Enter — the same
 bytes, indistinguishable to any program.
+
+They are letters rather than digits because **terminals bind `alt+1`–`alt+9` to
+switching tabs**, so a digit is swallowed before any program inside can see it.
+`alt+7` and `alt+8` still work as aliases in terminals that do pass them
+through.
 
 The mouse is left to your terminal, so selecting and copying text works exactly
 as it does anywhere else. Move the cursor with the arrow keys.

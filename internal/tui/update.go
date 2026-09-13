@@ -185,10 +185,13 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			case "alt+q":
 				m.applyLine(quote)
 				return m, nil
-			case "alt+8":
+			// Letters, not digits: GNOME Terminal and others bind alt+1..9 to
+			// switching tabs, so a digit never reaches the program. The digits
+			// stay as aliases for terminals that do pass them through.
+			case "alt+l", "alt+8":
 				m.applyLine(bullet)
 				return m, nil
-			case "alt+7":
+			case "alt+o", "alt+7":
 				m.applyLine(numbered)
 				return m, nil
 			case "alt+t":

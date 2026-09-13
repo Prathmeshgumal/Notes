@@ -557,6 +557,9 @@ func TestFormattingKeysAreWired(t *testing.T) {
 		{[]tea.KeyMsg{{Type: tea.KeyCtrlK}}, "word", "[word]()"},
 		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'h'}, Alt: true}}, "line", "# line"},
 		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'q'}, Alt: true}}, "line", "> line"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'l'}, Alt: true}}, "line", "- line"},
+		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'o'}, Alt: true}}, "line", "1. line"},
+		// The digits remain as aliases where a terminal passes them through.
 		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'8'}, Alt: true}}, "line", "- line"},
 		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'7'}, Alt: true}}, "line", "1. line"},
 		{[]tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'t'}, Alt: true}}, "line", "- [ ] line"},
@@ -635,7 +638,7 @@ func TestFormattingIsIgnoredInTheTitleField(t *testing.T) {
 	}
 	for _, k := range []tea.KeyMsg{
 		{Type: tea.KeyCtrlB},
-		{Type: tea.KeyRunes, Runes: []rune{'8'}, Alt: true},
+		{Type: tea.KeyRunes, Runes: []rune{'l'}, Alt: true},
 		{Type: tea.KeyRunes, Runes: []rune{'h'}, Alt: true},
 	} {
 		m = press(m, k)
