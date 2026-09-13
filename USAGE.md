@@ -115,6 +115,9 @@ While editing:
 | `ctrl+e` | Hand the body to `$EDITOR`; save and quit there to come back |
 | `↵` | New line (when the body has focus) |
 
+Notes are not limited in length. Paste a whole Markdown file in and keep
+editing it.
+
 `ctrl+b`, `alt+i`, `alt+s`, `alt+c` and `ctrl+k` act on the word under the
 cursor; the rest act on the line. All of them toggle off if you press them
 again, and the list types convert between each other rather than stacking.

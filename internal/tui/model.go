@@ -100,6 +100,12 @@ func New(st *store.Store) model {
 	body.Placeholder = "Write in Markdown…"
 	body.ShowLineNumbers = false
 	body.CharLimit = 0
+	// A note has no business being limited by the editor's defaults. The
+	// height cap is the damaging one: pasted text ignores it, but Enter is
+	// refused once the note reaches it, so a long pasted note silently stops
+	// accepting new lines. Zero means no limit for both.
+	body.MaxHeight = 0
+	body.MaxWidth = 0
 
 	// Ask the terminal about its background exactly once. Doing this per
 	// render (via glamour's auto style) stalls every keypress.

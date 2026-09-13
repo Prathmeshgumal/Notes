@@ -647,3 +647,44 @@ func TestFormattingIsIgnoredInTheTitleField(t *testing.T) {
 		t.Errorf("body = %q, want it untouched", got)
 	}
 }
+
+// The editor's defaults cap a textarea at 99 lines and refuse Enter beyond it,
+// while pasted text ignores the cap — so a long note would silently stop
+// accepting new lines. Notes are not limited.
+func TestLongNotesStillAcceptNewLines(t *testing.T) {
+	m, st := newTestModel(t)
+	long := strings.Repeat("a line of a pasted markdown file\n", 400)
+	if _, err := st.Create("Pasted", long); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnter}) // open the editor
+
+	before := strings.Count(m.body.Value(), "\n")
+	if before < 99 {
+		t.Fatalf("the test note is only %d lines; it must exceed the old cap", before)
+	}
+
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnter})
+	if got := strings.Count(m.body.Value(), "\n"); got != before+1 {
+		t.Errorf("Enter did nothing on a %d-line note (still %d lines)", before, got)
+	}
+
+	for _, r := range "typed after the newline" {
+		m = press(m, key(r))
+	}
+	if !strings.Contains(m.body.Value(), "typed after the newline") {
+		t.Error("typing after the new line did not reach the note")
+	}
+}
+
+func TestEditorHasNoLineOrWidthCap(t *testing.T) {
+	m, _ := newTestModel(t)
+	if m.body.MaxHeight != 0 {
+		t.Errorf("MaxHeight = %d, want 0 (unlimited)", m.body.MaxHeight)
+	}
+	if m.body.MaxWidth != 0 {
+		t.Errorf("MaxWidth = %d, want 0 (unlimited)", m.body.MaxWidth)
+	}
+}
