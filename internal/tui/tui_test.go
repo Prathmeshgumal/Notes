@@ -443,3 +443,101 @@ func TestUndoAfterRestoringFromTrashIsHarmless(t *testing.T) {
 		t.Errorf("%d notes live, want 1", got)
 	}
 }
+
+func TestPurgeFromTrashNeedsConfirmation(t *testing.T) {
+	m, st := newTestModel(t)
+	n, _ := st.Create("doomed", "x")
+	if err := st.Delete(n.ID); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, key('T'))
+	trash, _ := st.Trash()
+	m = press(m, trashLoadedMsg{notes: trash})
+
+	// Answering no must leave it recoverable.
+	cancelled := press(press(m, key('d')), key('n'))
+	if cancelled.mode != modeTrash {
+		t.Errorf("cancelling should return to the trash, mode = %v", cancelled.mode)
+	}
+	if tr, _ := st.Trash(); len(tr) != 1 {
+		t.Fatal("the note was purged despite cancelling")
+	}
+
+	confirmed := press(press(m, key('d')), key('y'))
+	if confirmed.mode != modeTrash {
+		t.Errorf("confirming should return to the trash, mode = %v", confirmed.mode)
+	}
+	if tr, _ := st.Trash(); len(tr) != 0 {
+		t.Errorf("the note was not purged, %d left in the trash", len(tr))
+	}
+	// Gone for good.
+	if err := st.Restore(n.ID); err == nil {
+		t.Error("a purged note could still be restored")
+	}
+}
+
+func TestEmptyTrashNeedsConfirmationAndSparesLiveNotes(t *testing.T) {
+	m, st := newTestModel(t)
+	if _, err := st.Create("keep me", "a"); err != nil {
+		t.Fatal(err)
+	}
+	for _, title := range []string{"x", "y"} {
+		n, _ := st.Create(title, title)
+		if err := st.Delete(n.ID); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, key('T'))
+	trash, _ := st.Trash()
+	m = press(m, trashLoadedMsg{notes: trash})
+
+	cancelled := press(press(m, key('E')), key('n'))
+	if tr, _ := st.Trash(); len(tr) != 2 {
+		t.Fatal("the trash was emptied despite cancelling")
+	}
+	_ = cancelled
+
+	m = press(press(m, key('E')), key('y'))
+	if tr, _ := st.Trash(); len(tr) != 0 {
+		t.Errorf("trash still holds %d notes", len(tr))
+	}
+	live := mustList(t, st)
+	if len(live) != 1 || live[0].Title != "keep me" {
+		t.Errorf("live notes = %v, want only the kept one", titlesOf(live))
+	}
+	// Undo must not try to restore ids that no longer exist.
+	m = press(m, tea.KeyMsg{Type: tea.KeyEsc})
+	m = press(m, key('u'))
+	if m.err != nil {
+		t.Errorf("undo after emptying the trash errored: %v", m.err)
+	}
+}
+
+// The question must name what it is about, so nothing is confirmed blind.
+func TestConfirmPromptsNameTheirTarget(t *testing.T) {
+	m, st := newTestModel(t)
+	n, _ := st.Create("Quarterly plan", "x")
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	asked := press(m, key('d'))
+	if !strings.Contains(asked.confirmPrompt, "Quarterly plan") {
+		t.Errorf("prompt %q does not name the note", asked.confirmPrompt)
+	}
+	if !strings.Contains(asked.View(), "Quarterly plan") {
+		t.Error("the question is not visible on screen")
+	}
+
+	if err := st.Delete(n.ID); err != nil {
+		t.Fatal(err)
+	}
+	inTrash := press(m, key('T'))
+	trash, _ := st.Trash()
+	inTrash = press(inTrash, trashLoadedMsg{notes: trash})
+	purge := press(inTrash, key('d'))
+	if !strings.Contains(purge.confirmPrompt, "cannot be undone") {
+		t.Errorf("a permanent delete should say so: %q", purge.confirmPrompt)
+	}
+}

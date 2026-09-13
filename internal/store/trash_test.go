@@ -157,3 +157,68 @@ func mustListStore(t *testing.T, st *Store) []Note {
 	}
 	return notes
 }
+
+func TestPurgeRemovesOnlyTrashedNotes(t *testing.T) {
+	st := newTestStore(t)
+	live, _ := st.Create("live", "a")
+	gone, _ := st.Create("gone", "b")
+	if err := st.Delete(gone.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	// A live note must not be purgeable.
+	if err := st.Purge(live.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("purging a live note = %v, want ErrNotFound", err)
+	}
+	if len(mustListStore(t, st)) != 1 {
+		t.Fatal("the live note was removed")
+	}
+
+	if err := st.Purge(gone.ID); err != nil {
+		t.Fatal(err)
+	}
+	trash, _ := st.Trash()
+	if len(trash) != 0 {
+		t.Errorf("trash still holds %d notes", len(trash))
+	}
+	// Gone for good: it cannot be restored.
+	if err := st.Restore(gone.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("a purged note came back: %v", err)
+	}
+}
+
+func TestEmptyTrashLeavesLiveNotesAlone(t *testing.T) {
+	st := newTestStore(t)
+	if _, err := st.Create("keep me", "a"); err != nil {
+		t.Fatal(err)
+	}
+	for _, title := range []string{"x", "y", "z"} {
+		n, _ := st.Create(title, title)
+		if err := st.Delete(n.ID); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	n, err := st.EmptyTrash()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 3 {
+		t.Errorf("emptied %d notes, want 3", n)
+	}
+	if trash, _ := st.Trash(); len(trash) != 0 {
+		t.Errorf("trash is not empty: %d", len(trash))
+	}
+	live := mustListStore(t, st)
+	if len(live) != 1 || live[0].Title != "keep me" {
+		t.Errorf("live notes = %v, want just the kept one", titles(live))
+	}
+}
+
+func TestEmptyTrashOnAnEmptyTrash(t *testing.T) {
+	st := newTestStore(t)
+	n, err := st.EmptyTrash()
+	if err != nil || n != 0 {
+		t.Errorf("EmptyTrash on an empty trash = (%d, %v), want (0, nil)", n, err)
+	}
+}

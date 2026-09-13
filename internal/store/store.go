@@ -184,6 +184,30 @@ func (s *Store) Trash() ([]Note, error) {
 	return scan(rows)
 }
 
+// Purge permanently removes a single trashed note. This cannot be undone, so
+// it refuses to touch a note that is still live.
+func (s *Store) Purge(id string) error {
+	res, err := s.db.Exec(`DELETE FROM notes WHERE id = ? AND deleted_at IS NOT NULL`, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// EmptyTrash permanently removes every trashed note and reports how many went.
+// Live notes are untouched.
+func (s *Store) EmptyTrash() (int, error) {
+	res, err := s.db.Exec(`DELETE FROM notes WHERE deleted_at IS NOT NULL`)
+	if err != nil {
+		return 0, err
+	}
+	n, _ := res.RowsAffected()
+	return int(n), nil
+}
+
 func (s *Store) purgeExpiredTrash() error {
 	cutoff := time.Now().UTC().Add(-TrashRetention).Format(time.RFC3339Nano)
 	_, err := s.db.Exec(`DELETE FROM notes WHERE deleted_at IS NOT NULL AND deleted_at < ?`, cutoff)

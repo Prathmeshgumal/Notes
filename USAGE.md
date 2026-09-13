@@ -124,8 +124,21 @@ Nothing is destroyed immediately. A trashed note stays recoverable for **30
 days**, then is purged the next time the app starts.
 
 `u` walks back through your deletes one at a time, so several deletes take
-several undos. `T` opens the trash itself: `j`/`k` to move, `↵` to restore,
-`esc` to go back.
+several undos.
+
+`T` opens the trash:
+
+| Key | Does |
+| --- | --- |
+| `j` / `k` | Move through the trashed notes |
+| `↵` | Restore the selected note |
+| `d` | Delete it for good — asks first, and cannot be undone |
+| `E` | Empty the trash — asks first, and cannot be undone |
+| `esc` | Back to your notes |
+
+`d` and `E` are the only two actions in the app that destroy anything. Both name
+what they are about to remove and both say plainly that it cannot be undone. A
+snapshot from before the app started is still in `backups/` either way.
 
 ### The web UI from the terminal
 

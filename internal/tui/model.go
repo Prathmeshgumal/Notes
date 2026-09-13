@@ -51,7 +51,15 @@ type model struct {
 	keepID      string   // note to keep selected across the next reload
 	trash       []store.Note
 	trashCursor int
-	linkCursor  int // which link 'o' opens next, within the selected note
+
+	// A pending yes/no question. The action is described rather than held as
+	// a closure: the model is passed by value, so a closure would mutate a
+	// copy that has already been discarded by the time the answer arrives.
+	confirmPrompt string
+	confirmKind   confirmKind
+	confirmID     string
+	confirmReturn mode
+	linkCursor    int // which link 'o' opens next, within the selected note
 
 	// Rendering Markdown is the expensive part of moving the cursor, so the
 	// renderer is built once per width and the output cached per note.
@@ -298,6 +306,58 @@ func (m *model) linkBody() {
 	m.placeBodyCursor(row, col)
 }
 
+// confirmKind names what a pending yes/no question will do.
+type confirmKind int
+
+const (
+	confirmNone confirmKind = iota
+	confirmTrashNote
+	confirmPurgeNote
+	confirmEmptyTrash
+)
+
+// ask puts a yes/no question to the reader before doing something.
+func (m *model) ask(kind confirmKind, id, prompt string) {
+	m.confirmKind = kind
+	m.confirmID = id
+	m.confirmPrompt = prompt
+	m.confirmReturn = m.mode
+	m.mode = modeConfirm
+}
+
+// runConfirmed carries out the action the reader just agreed to.
+func (m *model) runConfirmed() tea.Cmd {
+	kind, id := m.confirmKind, m.confirmID
+	m.confirmKind, m.confirmID, m.confirmPrompt = confirmNone, "", ""
+
+	switch kind {
+	case confirmTrashNote:
+		if err := m.st.Delete(id); err != nil {
+			m.err = err
+			return nil
+		}
+		m.deleted = append(m.deleted, id)
+		return tea.Batch(m.reload(), flash("Moved to trash — press u to undo"))
+
+	case confirmPurgeNote:
+		if err := m.st.Purge(id); err != nil {
+			m.err = err
+			return nil
+		}
+		return tea.Batch(m.loadTrash(), flash("Deleted for good"))
+
+	case confirmEmptyTrash:
+		n, err := m.st.EmptyTrash()
+		if err != nil {
+			m.err = err
+			return nil
+		}
+		m.deleted = nil // those ids are gone; undo has nothing to return to
+		return tea.Batch(m.loadTrash(), flash(fmt.Sprintf("Emptied the trash (%d notes)", n)))
+	}
+	return nil
+}
+
 func (m *model) loadTrash() tea.Cmd {
 	return func() tea.Msg {
 		notes, err := m.st.Trash()
@@ -500,6 +560,9 @@ func (m model) footer() string {
 	status := m.status
 	if m.err != nil {
 		status = errStyle.Render("error: " + m.err.Error())
+	}
+	if m.mode == modeConfirm && m.confirmPrompt != "" {
+		status = errStyle.Render(" " + m.confirmPrompt)
 	}
 	if status == "" && m.server != nil {
 		status = dimStyle.Render("web: " + m.server.URL)

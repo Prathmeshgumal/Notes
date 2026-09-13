@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -89,6 +91,19 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 		case "enter", "u", "r":
 			return m, m.restoreFromTrash()
+		case "d":
+			if n := m.selectedTrash(); n != nil {
+				m.ask(confirmPurgeNote, n.ID,
+					"Delete \""+truncate(n.Title, 40)+"\" for good? This cannot be undone.")
+			}
+		case "E":
+			if n := len(m.trash); n == 1 {
+				m.ask(confirmEmptyTrash, "",
+					"Permanently delete the note in the trash? This cannot be undone.")
+			} else if n > 1 {
+				m.ask(confirmEmptyTrash, "", fmt.Sprintf(
+					"Permanently delete all %d notes in the trash? This cannot be undone.", n))
+			}
 		}
 		return m, nil
 
@@ -97,23 +112,12 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case modeConfirm:
-		switch msg.String() {
-		case "y", "Y":
-			m.mode = modeList
-			n := m.selected()
-			if n == nil {
-				return m, nil
-			}
-			if err := m.st.Delete(n.ID); err != nil {
-				m.err = err
-				return m, nil
-			}
-			m.deleted = append(m.deleted, n.ID)
-			return m, tea.Batch(m.reload(), flash("Moved to trash — press u to undo"))
-		default:
-			m.mode = modeList
-			return m, nil
+		m.mode = m.confirmReturn
+		if msg.String() == "y" || msg.String() == "Y" {
+			return m, m.runConfirmed()
 		}
+		m.confirmKind, m.confirmID, m.confirmPrompt = confirmNone, "", ""
+		return m, nil
 
 	case modeSearch:
 		switch msg.Type {
@@ -222,8 +226,9 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.mode = modeSearch
 		m.search.Focus()
 	case "d":
-		if m.selected() != nil {
-			m.mode = modeConfirm
+		if n := m.selected(); n != nil {
+			m.ask(confirmTrashNote, n.ID,
+				"Move \""+truncate(n.Title, 40)+"\" to the trash?")
 		}
 	case "o":
 		return m, m.openLink()

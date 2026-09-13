@@ -19,9 +19,9 @@ func (m model) helpLine() string {
 	case modeEdit:
 		return "ctrl+s save  ctrl+b bold  alt+i italic  ctrl+k link  tab title/body  ctrl+e $EDITOR  esc cancel"
 	case modeConfirm:
-		return "y move to trash   n / esc cancel"
+		return "y confirm   n / esc cancel"
 	case modeTrash:
-		return "j/k move   ↵ restore   esc back"
+		return "j/k move   ↵ restore   d delete for good   E empty trash   esc back"
 	case modeHelp:
 		return "any key to close"
 	default:
@@ -54,6 +54,7 @@ const helpText = `
     d            move to trash (asks first)
     u            undo the last delete (again for the one before it)
     T            the trash — restore anything deleted in the last 30 days
+                 inside it: ↵ restore, d delete for good, E empty the trash
     w            start the web UI and open a browser
     r            reload from disk
     ?            this help

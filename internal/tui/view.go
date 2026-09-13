@@ -9,6 +9,12 @@ import (
 
 func (m model) View() string {
 	switch m.mode {
+	case modeConfirm:
+		// Draw whatever is being asked about, with the question in the footer.
+		if m.confirmReturn == modeTrash {
+			return m.trashView()
+		}
+		return m.listView()
 	case modeTrash:
 		return m.trashView()
 	case modeHelp:
@@ -47,13 +53,6 @@ func (m model) listView() string {
 
 	body := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, preview)
 
-	if m.mode == modeConfirm {
-		if n := m.selected(); n != nil {
-			return body + "\n" + errStyle.Render(
-				fmt.Sprintf(" Move %q to the trash? ", truncate(n.Title, 40))) +
-				helpStyle.Render("y / n")
-		}
-	}
 	if m.mode == modeSearch {
 		return body + "\n" + m.search.View() + "\n" + helpStyle.Render(" "+m.helpLine())
 	}
