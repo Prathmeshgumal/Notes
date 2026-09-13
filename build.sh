@@ -38,8 +38,8 @@ HTML
 fi
 
 echo "==> Compiling"
-go build -ldflags "-s -w -X main.version=${VERSION}" -o notes .
+go build -ldflags "-s -w -X main.version=${VERSION}" -o note .
 
 echo
-echo "Built ./notes ($(du -h notes | cut -f1))"
-echo "Run it with:  ./notes"
+echo "Built ./note ($(du -h note | cut -f1))"
+echo "Run it with:  ./note"

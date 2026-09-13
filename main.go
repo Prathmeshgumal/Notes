@@ -28,7 +28,7 @@ func main() {
 	flag.Parse()
 
 	if *showVer {
-		fmt.Println("notes", version)
+		fmt.Println("note", version)
 		return
 	}
 

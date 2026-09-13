@@ -1,5 +1,5 @@
 # build output
-/notes
+/note
 client/dist/
 internal/web/dist/
 node_modules/

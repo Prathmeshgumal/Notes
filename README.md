@@ -27,16 +27,16 @@ Needs [Go](https://go.dev/dl) to build, and Node only if you want to rebuild the
 web UI. The result is one self-contained binary.
 
 ```bash
-git clone https://github.com/<you>/notes.git
-cd notes
+git clone https://github.com/<you>/note.git
+cd note
 ./build.sh
-cp notes ~/.local/bin/     # anywhere on your PATH
+cp note ~/.local/bin/      # anywhere on your PATH
 ```
 
 Then, from anywhere:
 
 ```bash
-notes
+note
 ```
 
 ## Keys
@@ -48,6 +48,7 @@ notes
 | `↵` | edit the selected note |
 | `n` | new note |
 | `/` | search titles and bodies, `esc` clears |
+| `o` | open a link from the note (again for the next) |
 | `d` | move to trash, asks first |
 | `u` | undo the last delete |
 | `w` | start the web UI and open a browser |
@@ -67,8 +68,8 @@ title, the way GitHub Gists do it.
 Press `w` in the TUI, or run it on its own:
 
 ```bash
-notes --web            # http://localhost:4321
-notes --web --port 9000
+note --web            # http://localhost:4321
+note --web --port 9000
 ```
 
 Same notes, same database, live at the same time — SQLite's WAL mode means the
@@ -95,7 +96,7 @@ Back it up by copying that file.
 one you trashed, and trashed notes stay recoverable for 30 days before being
 purged.
 
-Every time `notes` starts it also copies the database to
+Every time `note` starts it also copies the database to
 `~/.local/share/notes/backups/`, keeping the last 10. To go back to one:
 
 ```bash
@@ -108,7 +109,7 @@ cp ~/.local/share/notes/backups/notes-20260913-140331.db \
 Point it at a throwaway database to experiment without touching your notes:
 
 ```bash
-notes --db /tmp/scratch.db
+note --db /tmp/scratch.db
 ``` Point somewhere else with `--db /path/to.db` or
 `NOTES_DB=/path/to.db`. No server, no daemon, nothing running when you're not
 using it.
@@ -131,7 +132,7 @@ go test ./...        # store and TUI behaviour
 The web UI can be developed with hot reload against a running API:
 
 ```bash
-notes --web &
+note --web &
 npm --prefix client run dev     # http://localhost:5173
 ```
 
