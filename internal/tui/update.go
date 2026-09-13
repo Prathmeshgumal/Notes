@@ -14,7 +14,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case reloadedMsg:
 		m.err = msg.err
+
+		// Notes are listed most-recently-edited first, so the list reorders as
+		// you work. Follow the note itself rather than its old position.
+		want := m.keepID
+		if want == "" {
+			if n := m.selected(); n != nil {
+				want = n.ID
+			}
+		}
+		m.keepID = ""
+
 		m.notes = msg.notes
+		if want != "" {
+			for i, n := range m.notes {
+				if n.ID == want {
+					m.cursor = i
+					break
+				}
+			}
+		}
 		if m.cursor >= len(m.notes) {
 			m.cursor = max(0, len(m.notes)-1)
 		}

@@ -45,6 +45,7 @@ type model struct {
 	err    error
 
 	lastDeleted string // id of the most recent delete, for undo
+	keepID      string // note to keep selected across the next reload
 
 	// Rendering Markdown is the expensive part of moving the cursor, so the
 	// renderer is built once per width and the output cached per note.
@@ -223,16 +224,21 @@ func (m *model) save() tea.Cmd {
 		m.mode = modeList
 		return flash("Empty note discarded")
 	}
-	var err error
+	var (
+		saved store.Note
+		err   error
+	)
 	if m.editing == nil {
-		_, err = m.st.Create(title, content)
+		saved, err = m.st.Create(title, content)
 	} else {
-		_, err = m.st.Update(m.editing.ID, title, content)
+		saved, err = m.st.Update(m.editing.ID, title, content)
 	}
 	if err != nil {
 		m.err = err
 		return nil
 	}
+	// Saving moves the note to the top of the list; follow it there.
+	m.keepID = saved.ID
 	m.mode = modeList
 	m.editing = nil
 	return tea.Batch(m.reload(), flash("Saved"))

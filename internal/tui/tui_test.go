@@ -205,3 +205,66 @@ func TestUndoWithNothingDeletedIsHarmless(t *testing.T) {
 		t.Error("undo changed the notes")
 	}
 }
+
+func TestListIsMostRecentlyEditedFirst(t *testing.T) {
+	m, st := newTestModel(t)
+	first, _ := st.Create("oldest", "a")
+	if _, err := st.Create("newest", "b"); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+	if m.notes[0].Title != "newest" {
+		t.Fatalf("order = %v, want the newest note first", titlesOf(m.notes))
+	}
+
+	// Touching the older note must float it to the top.
+	if _, err := st.Update(first.ID, "oldest", "edited"); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+	if m.notes[0].Title != "oldest" {
+		t.Errorf("order = %v, want the just-edited note first", titlesOf(m.notes))
+	}
+}
+
+// Saving reorders the list; the cursor must follow the note, not the index.
+func TestSelectionFollowsNoteAcrossReorder(t *testing.T) {
+	m, st := newTestModel(t)
+	if _, err := st.Create("one", "a"); err != nil {
+		t.Fatal(err)
+	}
+	older, _ := st.Create("two", "b")
+	if _, err := st.Create("three", "c"); err != nil {
+		t.Fatal(err)
+	}
+
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	// Select the oldest note, which sits last.
+	for m.selected() != nil && m.selected().ID != older.ID {
+		m = press(m, key('j'))
+	}
+	if m.selected() == nil || m.selected().ID != older.ID {
+		t.Fatal("could not select the target note")
+	}
+
+	// Edit and save it: it jumps to the top of the list.
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnter})
+	m = press(m, key('!'))
+	m = press(m, tea.KeyMsg{Type: tea.KeyCtrlS})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	if got := m.selected(); got == nil || got.ID != older.ID {
+		t.Errorf("selection landed on %v, want the note that was just saved", got)
+	}
+}
+
+func titlesOf(notes []store.Note) []string {
+	out := make([]string, len(notes))
+	for i, n := range notes {
+		out[i] = n.Title
+	}
+	return out
+}
