@@ -52,8 +52,21 @@ To keep it around, put it on your PATH:
 mv note ~/.local/bin/
 ```
 
-On a 64-bit ARM machine — a Pi, an ARM server — use `note-linux-arm64` instead. Every
-release lists a `checksums.txt` you can verify against with `sha256sum -c`.
+On a 64-bit ARM machine — a Pi, an ARM server — use `note-linux-arm64` instead.
+
+<details>
+<summary>Verifying the download</summary>
+
+Every release ships a `checksums.txt`. Keep the original filename so the check can find
+the file:
+
+```bash
+curl -LO https://github.com/Prathmeshgumal/Notes/releases/latest/download/note-linux-amd64
+curl -LO https://github.com/Prathmeshgumal/Notes/releases/latest/download/checksums.txt
+sha256sum --ignore-missing -c checksums.txt
+```
+
+</details>
 
 <details>
 <summary>Building it yourself</summary>
