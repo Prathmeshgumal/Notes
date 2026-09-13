@@ -22,6 +22,10 @@ both can be open at once.
 
 Nothing runs in the background. When you quit, nothing is left running.
 
+The first time you run it, a welcome note is written so you have something to
+look at and something to try. Delete it whenever you like — nothing depends on
+it, and it is never written again.
+
 ---
 
 ## The terminal UI
@@ -182,6 +186,17 @@ button works on your selection, and pressing it again toggles the formatting off
 with an Edit button to go back. There's a search box, a light/dark toggle that
 follows your system by default, and deleting asks for confirmation.
 
+**The trash**, the same one the terminal shows. The bin at the foot of the
+sidebar carries a count of what is recoverable and opens it: Restore on each
+note, a permanent delete per note, and Empty trash. Deleting raises a message
+with an Undo button, and an undo arrow sits beside the bin for as long as there
+is something to undo. Both permanent actions ask first.
+
+Everything the terminal can do, the browser can do too, and the other way
+around — the only exceptions are the ones that only make sense in one place:
+`$EDITOR` hand-off and `o` to open a link belong to the terminal, since a
+browser already clicks links itself.
+
 ---
 
 ## Writing notes
@@ -280,8 +295,15 @@ Available whenever the web UI is running, for scripting against your notes.
 | `POST` | `/api/notes` | Create — `{"title": "...", "content": "..."}` |
 | `PUT` | `/api/notes/:id` | Update — same shape |
 | `DELETE` | `/api/notes/:id` | Move to the trash |
+| `GET` | `/api/trash` | List what is recoverable |
+| `POST` | `/api/trash/:id` | Restore a note |
+| `DELETE` | `/api/trash/:id` | Delete a note for good |
+| `DELETE` | `/api/trash` | Empty the trash |
 
 `title` may be omitted or empty; it's derived from the first line.
+
+The trash routes only act on trashed notes: a live note returns 404, so nothing
+can be destroyed without being trashed first.
 
 ```bash
 note --web &

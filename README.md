@@ -65,6 +65,8 @@ list types, quotes and rules — is in `?`.
 
 Leave the title blank and the first line becomes it, the way GitHub Gists work.
 
+The first run leaves you a welcome note to poke at. Delete it whenever you like.
+
 See **[USAGE.md](./USAGE.md)** for everything — every key, the Markdown rules,
 and the HTTP API.
 
