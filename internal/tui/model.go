@@ -3,6 +3,7 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -46,9 +47,11 @@ type model struct {
 	status string
 	err    error
 
-	lastDeleted string // id of the most recent delete, for undo
-	keepID      string // note to keep selected across the next reload
-	linkCursor  int    // which link 'o' opens next, within the selected note
+	deleted     []string // ids of deletes, newest last, for repeated undo
+	keepID      string   // note to keep selected across the next reload
+	trash       []store.Note
+	trashCursor int
+	linkCursor  int // which link 'o' opens next, within the selected note
 
 	// Rendering Markdown is the expensive part of moving the cursor, so the
 	// renderer is built once per width and the output cached per note.
@@ -59,6 +62,11 @@ type model struct {
 }
 
 type reloadedMsg struct {
+	notes []store.Note
+	err   error
+}
+
+type trashLoadedMsg struct {
 	notes []store.Note
 	err   error
 }
@@ -224,12 +232,13 @@ func markedUpStyle(name string) ansi.StyleConfig {
 	cfg.LinkText.Prefix = linkOpenMarker
 	cfg.LinkText.Suffix = linkCloseMarker
 
-	// GitHub gives a task item no bullet: its stylesheet sets
-	// list-style-type:none and pulls the checkbox into the marker's place with
-	// a negative margin. A one-cell box does the same here, so task text lines
-	// up with the text of ordinary bullets instead of sitting indented past it.
-	cfg.Task.Ticked = "☑ "
-	cfg.Task.Unticked = "☐ "
+	// GitHub hides the bullet on a task item (list-style-type:none) and puts
+	// the checkbox in the marker's place. Here the bullet is kept and the box
+	// follows it, which was asked for: a task then reads as a list item first
+	// and a checkbox second. The cost is that task text sits two columns right
+	// of plain bullet text, since the line carries two markers rather than one.
+	cfg.Task.Ticked = "• ☑ "
+	cfg.Task.Unticked = "• ☐ "
 
 	return cfg
 }
@@ -287,6 +296,52 @@ func (m *model) linkBody() {
 	m.body.SetValue(value)
 	row, col := rowColAt(value, pos)
 	m.placeBodyCursor(row, col)
+}
+
+func (m *model) loadTrash() tea.Cmd {
+	return func() tea.Msg {
+		notes, err := m.st.Trash()
+		return trashLoadedMsg{notes: notes, err: err}
+	}
+}
+
+// undo restores the most recent delete that has not been undone yet.
+func (m *model) undo() tea.Cmd {
+	for len(m.deleted) > 0 {
+		id := m.deleted[len(m.deleted)-1]
+		m.deleted = m.deleted[:len(m.deleted)-1]
+		err := m.st.Restore(id)
+		if err == nil {
+			m.keepID = id
+			return tea.Batch(m.reload(), flash("Restored"))
+		}
+		if !errors.Is(err, store.ErrNotFound) {
+			m.err = err
+			return nil
+		}
+		// Already restored from the trash view; try the one before it.
+	}
+	return flash("Nothing left to undo")
+}
+
+func (m *model) selectedTrash() *store.Note {
+	if m.trashCursor < 0 || m.trashCursor >= len(m.trash) {
+		return nil
+	}
+	return &m.trash[m.trashCursor]
+}
+
+func (m *model) restoreFromTrash() tea.Cmd {
+	n := m.selectedTrash()
+	if n == nil {
+		return nil
+	}
+	if err := m.st.Restore(n.ID); err != nil {
+		m.err = err
+		return nil
+	}
+	m.keepID = n.ID
+	return tea.Batch(m.loadTrash(), m.reload(), flash("Restored "+truncate(n.Title, 40)))
 }
 
 func (m *model) save() tea.Cmd {

@@ -40,6 +40,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.renderPreview()
 		return m, nil
 
+	case trashLoadedMsg:
+		m.err = msg.err
+		m.trash = msg.notes
+		if m.trashCursor >= len(m.trash) {
+			m.trashCursor = max(0, len(m.trash)-1)
+		}
+		return m, nil
+
 	case statusMsg:
 		m.status = string(msg)
 		return m, nil
@@ -66,6 +74,24 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.err = nil
 
 	switch m.mode {
+	case modeTrash:
+		switch msg.String() {
+		case "esc", "q", "T":
+			m.mode = modeList
+			return m, m.reload()
+		case "j", "down":
+			if m.trashCursor < len(m.trash)-1 {
+				m.trashCursor++
+			}
+		case "k", "up":
+			if m.trashCursor > 0 {
+				m.trashCursor--
+			}
+		case "enter", "u", "r":
+			return m, m.restoreFromTrash()
+		}
+		return m, nil
+
 	case modeHelp:
 		m.mode = modeList
 		return m, nil
@@ -82,7 +108,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.err = err
 				return m, nil
 			}
-			m.lastDeleted = n.ID
+			m.deleted = append(m.deleted, n.ID)
 			return m, tea.Batch(m.reload(), flash("Moved to trash — press u to undo"))
 		default:
 			m.mode = modeList
@@ -204,15 +230,11 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "w":
 		return m, m.toggleWeb()
 	case "u":
-		if m.lastDeleted == "" {
-			return m, flash("Nothing to undo")
-		}
-		if err := m.st.Restore(m.lastDeleted); err != nil {
-			m.err = err
-			return m, nil
-		}
-		m.lastDeleted = ""
-		return m, tea.Batch(m.reload(), flash("Restored"))
+		return m, m.undo()
+	case "T":
+		m.trashCursor = 0
+		m.mode = modeTrash
+		return m, m.loadTrash()
 	case "r":
 		return m, tea.Batch(m.reload(), flash("Reloaded"))
 	case "?":

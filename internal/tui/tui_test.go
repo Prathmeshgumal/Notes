@@ -351,3 +351,95 @@ func stripANSI(s string) string {
 	}
 	return b.String()
 }
+
+// Deleting several notes must be undoable several times, not just once.
+func TestUndoWalksBackThroughDeletes(t *testing.T) {
+	m, st := newTestModel(t)
+	for _, title := range []string{"one", "two", "three"} {
+		if _, err := st.Create(title, title); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	for i := 0; i < 3; i++ {
+		m = press(press(m, key('d')), key('y'))
+		m = press(m, reloadedMsg{notes: mustList(t, st)})
+	}
+	if n := len(mustList(t, st)); n != 0 {
+		t.Fatalf("expected everything trashed, %d left", n)
+	}
+
+	for i := 1; i <= 3; i++ {
+		m = press(m, key('u'))
+		m = press(m, reloadedMsg{notes: mustList(t, st)})
+		if got := len(mustList(t, st)); got != i {
+			t.Fatalf("after %d undos, %d notes are back, want %d", i, got, i)
+		}
+	}
+
+	// A fourth undo has nothing left to do and must not error.
+	m = press(m, key('u'))
+	if m.err != nil {
+		t.Errorf("undo past the end set an error: %v", m.err)
+	}
+}
+
+func TestTrashViewListsAndRestores(t *testing.T) {
+	m, st := newTestModel(t)
+	keep, _ := st.Create("keep", "a")
+	gone, _ := st.Create("gone", "b")
+	if err := st.Delete(gone.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	m = press(m, key('T'))
+	if m.mode != modeTrash {
+		t.Fatalf("T should open the trash, mode = %v", m.mode)
+	}
+	trash, err := st.Trash()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, trashLoadedMsg{notes: trash})
+	if len(m.trash) != 1 || m.trash[0].ID != gone.ID {
+		t.Fatalf("trash holds %v, want the deleted note", titlesOf(m.trash))
+	}
+
+	m = press(m, tea.KeyMsg{Type: tea.KeyEnter})
+	back := mustList(t, st)
+	if len(back) != 2 {
+		t.Fatalf("after restoring, %d notes are live, want 2", len(back))
+	}
+	_ = keep
+
+	m = press(m, tea.KeyMsg{Type: tea.KeyEsc})
+	if m.mode != modeList {
+		t.Errorf("esc should leave the trash, mode = %v", m.mode)
+	}
+}
+
+// Restoring from the trash must not leave a stale id for undo to trip over.
+func TestUndoAfterRestoringFromTrashIsHarmless(t *testing.T) {
+	m, st := newTestModel(t)
+	n, _ := st.Create("note", "x")
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	m = press(press(m, key('d')), key('y'))  // trashed, id pushed for undo
+	if err := st.Restore(n.ID); err != nil { // restored another way
+		t.Fatal(err)
+	}
+
+	m = press(m, key('u'))
+	if m.err != nil {
+		t.Errorf("undo of an already-restored note errored: %v", m.err)
+	}
+	if got := len(mustList(t, st)); got != 1 {
+		t.Errorf("%d notes live, want 1", got)
+	}
+}

@@ -117,10 +117,15 @@ behind, so they stay visible. Link syntax inside a code block stays literal.
 | Key | Does |
 | --- | --- |
 | `d` | Move the note to the trash — asks `y` / `n` first |
-| `u` | Undo the last delete |
+| `u` | Undo the last delete; press again to walk further back |
+| `T` | Open the trash and restore anything in it |
 
 Nothing is destroyed immediately. A trashed note stays recoverable for **30
 days**, then is purged the next time the app starts.
+
+`u` walks back through your deletes one at a time, so several deletes take
+several undos. `T` opens the trash itself: `j`/`k` to move, `↵` to restore,
+`esc` to go back.
 
 ### The web UI from the terminal
 

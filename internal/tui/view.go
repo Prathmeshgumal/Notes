@@ -9,6 +9,8 @@ import (
 
 func (m model) View() string {
 	switch m.mode {
+	case modeTrash:
+		return m.trashView()
 	case modeHelp:
 		return m.helpView()
 	case modeEdit:
@@ -113,6 +115,44 @@ func (m model) editView() string {
 	}
 
 	return titleStyle.Render(" "+label) + "\n" + titleBox + "\n" + bodyBox + "\n" + m.footer()
+}
+
+func (m model) trashView() string {
+	inner := m.height - 4
+	if inner < 3 {
+		inner = 3
+	}
+
+	var b strings.Builder
+	b.WriteString(titleStyle.Render(fmt.Sprintf("Trash (%d)", len(m.trash))) + "\n")
+	b.WriteString(dimStyle.Render("Deleted notes are kept for 30 days.") + "\n\n")
+
+	if len(m.trash) == 0 {
+		b.WriteString(dimStyle.Render("  The trash is empty."))
+	} else {
+		rows := inner - 3
+		if rows < 1 {
+			rows = 1
+		}
+		start := 0
+		if m.trashCursor >= rows {
+			start = m.trashCursor - rows + 1
+		}
+		end := min(start+rows, len(m.trash))
+
+		for i := start; i < end; i++ {
+			n := m.trash[i]
+			label := truncate(n.Title, m.width-24)
+			line := "  " + label
+			if i == m.trashCursor {
+				line = cursorStyle.Render("▸ ") + selectedStyle.Render(label)
+			}
+			b.WriteString(line + "\n")
+		}
+	}
+
+	return paneStyle.Width(m.width-4).Height(inner).Render(b.String()) +
+		"\n" + m.footer()
 }
 
 func (m model) helpView() string {

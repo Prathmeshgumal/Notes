@@ -200,24 +200,15 @@ func TestTableNeedsItsSeparatorRow(t *testing.T) {
 	}
 }
 
-// GitHub renders a task item with no bullet, the checkbox standing in the
-// marker's place, so task text aligns with the text of ordinary bullets.
-func TestTaskTextAlignsWithBulletText(t *testing.T) {
+// A task line carries a bullet as well as its checkbox. This departs from
+// GitHub, which hides the bullet, and is deliberate.
+func TestTaskLinesShowBulletThenCheckbox(t *testing.T) {
 	out := renderToPlain(t, "- [x] done\n- [ ] open\n- plain bullet\n")
 
-	cols := map[string]int{}
-	for _, line := range strings.Split(out, "\n") {
-		for _, word := range []string{"done", "open", "plain"} {
-			if i := strings.Index(line, word); i >= 0 {
-				cols[word] = len([]rune(line[:i]))
-			}
+	for _, want := range []string{"• ☑ done", "• ☐ open", "• plain bullet"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
 		}
-	}
-	if len(cols) != 3 {
-		t.Fatalf("could not find all three items in:\n%s", out)
-	}
-	if cols["done"] != cols["plain"] || cols["open"] != cols["plain"] {
-		t.Errorf("task text should start in the same column as bullet text: %v", cols)
 	}
 }
 
