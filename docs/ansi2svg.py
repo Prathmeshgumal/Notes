@@ -5,7 +5,7 @@ they would on screen, then each run of same-coloured cells becomes one <tspan>.
 """
 import re, sys, html
 
-COLS, ROWS = 108, 18
+COLS, ROWS = 104, 16
 
 # xterm-256 palette
 def xterm256(n):
@@ -98,45 +98,69 @@ CW, CH = 8.5, 19.0          # cell width / line height
 PAD, TOP = 18, 34           # padding, and room for the title bar
 BG, FGD = "#17101a", "#cfc2d4"
 
-def to_svg(grid, title="note"):
-    w = COLS*CW + PAD*2
-    h = ROWS*CH + TOP + PAD
+def to_svg(grid, title="nib"):
+    """One <text> per row, with every cell placed on an exact grid.
+
+    Earlier versions emitted a <text> per colour run and positioned each by x.
+    Any rounding between the assumed cell width and the browser's actual glyph
+    advance then accumulated across a row, which pulled box-drawing verticals
+    out of line and split the borders. Here each row is a single <text> whose
+    per-character positions are given explicitly, so a cell can never drift.
+    """
+    w = COLS * CW + PAD * 2
+    h = ROWS * CH + TOP + PAD
     out = [
       f'<svg xmlns="http://www.w3.org/2000/svg" width="{w:.0f}" height="{h:.0f}" '
       f'viewBox="0 0 {w:.0f} {h:.0f}" font-family="ui-monospace,SFMono-Regular,'
       f'Menlo,Consolas,&quot;DejaVu Sans Mono&quot;,monospace" font-size="13">',
       f'<rect width="{w:.0f}" height="{h:.0f}" rx="10" fill="{BG}"/>',
-      # window chrome
       '<circle cx="26" cy="19" r="5.5" fill="#ff5f57"/>',
       '<circle cx="45" cy="19" r="5.5" fill="#febc2e"/>',
       '<circle cx="64" cy="19" r="5.5" fill="#28c840"/>',
       f'<text x="{w/2:.0f}" y="23" fill="#7d6f84" font-size="12" '
       f'text-anchor="middle">{html.escape(title)}</text>',
     ]
+
+    # x for every column, computed once so all rows share the same grid
+    xs = ' '.join(f'{PAD + c*CW:.1f}' for c in range(COLS))
+
     for r, row in enumerate(grid):
         y = TOP + r*CH + 13
-        runs, cur = [], None
-        for col, (ch, fg, bold) in enumerate(row):
+        if not any(ch.strip() for ch, _, _ in row):
+            continue
+
+        # Split the row into colour runs, but keep them inside one <text> as
+        # <tspan>s so the shared x list keeps every cell aligned.
+        spans, cur_key, buf = [], None, []
+        for ch, fg, bold in row:
             key = (fg, bold)
-            if cur and cur[0] == key and cur[2] == col:
-                cur[1].append(ch); cur[2] = col+1
-            else:
-                if cur: runs.append(cur)
-                cur = [key, [ch], col+1, col]
-        if cur: runs.append(cur)
-        for (fg, bold), chars, _end, start in runs:
-            text = ''.join(chars).rstrip()
-            if not text.strip(): continue
+            if key != cur_key and buf:
+                spans.append((cur_key, ''.join(buf)))
+                buf = []
+            cur_key = key
+            buf.append(ch)
+        if buf:
+            spans.append((cur_key, ''.join(buf)))
+
+        # drop trailing blank run so a row does not pad to full width
+        while spans and not spans[-1][1].strip():
+            spans.pop()
+        if not spans:
+            continue
+
+        parts = []
+        for (fg, bold), text in spans:
             colour = '#%02x%02x%02x' % fg if fg else FGD
             weight = ' font-weight="600"' if bold else ''
-            x = PAD + start*CW
-            out.append(
-              f'<text x="{x:.1f}" y="{y:.0f}" fill="{colour}"{weight} '
-              f'xml:space="preserve">{html.escape(text)}</text>')
+            parts.append(f'<tspan fill="{colour}"{weight}>{html.escape(text)}</tspan>')
+
+        out.append(f'<text x="{xs}" y="{y:.0f}" xml:space="preserve">'
+                   + ''.join(parts) + '</text>')
+
     out.append('</svg>')
     return '\n'.join(out)
 
 if __name__ == '__main__':
     raw = open(sys.argv[1], encoding='utf8', errors='replace').read()
-    open(sys.argv[2], 'w').write(to_svg(replay(raw), sys.argv[3] if len(sys.argv)>3 else 'note'))
+    open(sys.argv[2], 'w').write(to_svg(replay(raw), sys.argv[3] if len(sys.argv) > 3 else 'nib'))
     print(f"  wrote {sys.argv[2]}")
