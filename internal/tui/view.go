@@ -31,16 +31,8 @@ func (m model) View() string {
 }
 
 func (m model) listView() string {
-	paneHeight := m.height - 2
-	if paneHeight < 5 {
-		paneHeight = 5
-	}
-	inner := paneHeight - 2
-
-	previewWidth := m.width - asideWidth - 4
-	if previewWidth < 20 {
-		previewWidth = 20
-	}
+	l := m.geometry()
+	inner, previewWidth := l.inner, l.previewWidth
 
 	header := "Preview"
 	if n := m.selected(); n != nil {
@@ -56,24 +48,26 @@ func (m model) listView() string {
 		m.preview.YOffset,
 	)
 
-	note := focusedPane.
+	docStyle, listStyle := focusedPane, paneStyle
+	if m.focus == paneList {
+		docStyle, listStyle = paneStyle, focusedPane
+	}
+
+	note := docStyle.
 		Width(previewWidth).
 		Height(inner).
 		Render(titleStyle.Render(truncate(header, previewWidth-4)) + "\n" + scrolled)
 
 	// The right-hand column: a small box of facts about the note being read,
 	// and the list of notes filling everything beneath it.
-	listRows := inner - asideDetailRows - 2
-	if listRows < 3 {
-		listRows = 3
-	}
+	listRows := l.listRows
 
 	details := paneStyle.
 		Width(asideWidth).
 		Height(asideDetailRows).
 		Render(m.asideDetails())
 
-	list := paneStyle.
+	list := listStyle.
 		Width(asideWidth).
 		Height(listRows).
 		Render(m.asideList(listRows))
@@ -100,16 +94,8 @@ func (m model) asideList(rows int) string {
 	var b strings.Builder
 	b.WriteString(titleStyle.Render(fmt.Sprintf("Notes (%d)", len(m.notes))) + "\n")
 
-	visible := rows - 1
-	if visible < 1 {
-		visible = 1
-	}
 	// Keep the cursor in view by sliding the window of titles.
-	start := 0
-	if m.cursor >= visible {
-		start = m.cursor - visible + 1
-	}
-	end := min(start+visible, len(m.notes))
+	start, end := m.geometry().window(m.cursor, len(m.notes))
 
 	for i := start; i < end; i++ {
 		label := truncate(m.notes[i].Title, asideWidth-5)
