@@ -20,24 +20,25 @@
 <meta name="twitter:description" content="A terminal note taker with a browser UI in the same 19 MB binary. Local-first, MIT licensed.">
 <meta name="twitter:image" content="https://nib-note.vercel.app/og.png">
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%231e1e1e'/><text y='23' x='4' font-size='20' font-family='monospace' fill='%2314c47d'>$</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23071022'/><text y='23' x='4' font-size='20' font-family='monospace' fill='%23ffd02e'>$</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&family=Archivo:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&family=Archivo:wght@400;500;600;700;800&display=swap">
 <style>
   :root {
     color-scheme: light;
-    --paper:  #efeeec;
-    --paper2: #f7f7f6;
-    --ink:    #1e1e1e;
-    --ink2:   #4a4a48;
-    --faint:  #8d8b87;
-    --rule:   #cbc8c5;
-    --lime:   #14c47d;
-    --blue:   #350aff;
-    --orange: #ff4c24;
-    --screen: #17101a;
-    --screen-ink: #cfc2d4;
+    --paper:  #eceff6;
+    --paper2: #f8fafd;
+    --ink:    #08152b;
+    --ink2:   #3b4a60;
+    --faint:  #77869b;
+    --rule:   #c3cfe1;
+
+    --blue:   #1a46d8;
+    --blue2:  #4f7dff;
+    --navy:   #071022;
+    --screen-ink: #ccd9ef;
+    --yellow: #ffd02e;
 
     --raster: "Silkscreen", "Courier New", monospace;
     --mono:   "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -45,6 +46,9 @@
   }
 
   * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
   body {
     margin: 0;
@@ -57,254 +61,350 @@
     overflow-x: hidden;
   }
 
-  .wrap { max-width: 1400px; margin: 0 auto; padding-inline: clamp(14px, 3vw, 38px); }
+  a { color: inherit; }
+  ::selection { background: var(--yellow); color: var(--ink); }
+
+  .wrap { max-width: 1400px; margin: 0 auto; padding-inline: clamp(16px, 3vw, 38px); }
+
+  /* ── scroll progress ──────────────────────────────────── */
+  #prog {
+    position: fixed; inset: 0 auto auto 0; height: 3px; width: 100%;
+    transform: scaleX(0); transform-origin: left center;
+    background: var(--yellow); z-index: 100;
+  }
 
   /* ── marquee ─────────────────────────────────────────── */
   .strip {
-    background: var(--ink); color: var(--paper);
-    overflow: hidden; white-space: nowrap; padding-block: 7px;
+    background: var(--navy); color: var(--paper);
+    overflow: hidden; white-space: nowrap; padding-block: 8px;
     font-family: var(--raster); font-size: 11px; letter-spacing: .05em;
   }
-  .strip ul { display: inline-flex; margin: 0; padding: 0; list-style: none; animation: slide 30s linear infinite; }
+  .strip ul { display: inline-flex; margin: 0; padding: 0; list-style: none; animation: slide 32s linear infinite; }
   .strip li { display: inline-flex; gap: 26px; padding-right: 26px; }
-  .strip .g { color: var(--lime); }
+  .strip .y { color: var(--yellow); }
   @keyframes slide { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .strip ul { animation: none; } }
 
   /* ── nav ─────────────────────────────────────────────── */
-  nav { position: fixed; inset: 0 0 auto; z-index: 90; background: var(--paper); border-bottom: 1px solid var(--ink); }
-  .navrow { max-width: 1400px; margin: 0 auto; padding: 10px clamp(14px,3vw,38px); display: flex; align-items: center; gap: 10px; }
-  .mark { font-family: var(--raster); font-size: 16px; color: var(--ink); text-decoration: none; }
-  .mark i { color: var(--lime); font-style: normal; }
+  nav {
+    position: fixed; inset: 0 0 auto; z-index: 90;
+    background: rgba(236,239,246,.86); backdrop-filter: blur(9px);
+    border-bottom: 1px solid var(--rule); transition: border-color .2s, background .2s;
+  }
+  nav.stuck { border-bottom-color: var(--ink); background: rgba(236,239,246,.96); }
+  .navrow { max-width: 1400px; margin: 0 auto; padding: 11px clamp(16px,3vw,38px); display: flex; align-items: center; gap: 10px; }
+  .mark { font-family: var(--raster); font-size: 16px; text-decoration: none; letter-spacing: .02em; }
+  .mark i { color: var(--blue); font-style: normal; }
   .navrow .fill { flex: 1; }
-  .navlinks { display: none; gap: 20px; }
-  @media (min-width: 900px) { .navlinks { display: flex; } }
-  .navlinks a { font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink2); text-decoration: none; }
-  .navlinks a:hover { color: var(--lime); }
+  .navlinks { display: none; gap: 22px; }
+  @media (min-width: 1000px) { .navlinks { display: flex; } }
+  .navlinks a {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--ink2); text-decoration: none;
+    padding-bottom: 2px; border-bottom: 1.5px solid transparent; transition: color .15s, border-color .15s;
+  }
+  .navlinks a:hover, .navlinks a.on { color: var(--blue); border-bottom-color: var(--yellow); }
+
+  .gh {
+    display: none; align-items: center; gap: 8px; text-decoration: none;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 500;
+    border: 1px solid var(--ink); padding: 8px 12px; transition: background .15s, color .15s;
+  }
+  @media (min-width: 620px) { .gh { display: inline-flex; } }
+  .gh:hover { background: var(--ink); color: var(--paper); }
+  .gh .n { font-weight: 600; color: var(--blue); }
+  .gh:hover .n { color: var(--yellow); }
+
   .go {
     font-family: var(--mono); font-size: 11.5px; font-weight: 600;
     letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
-    background: var(--ink); color: var(--paper); padding: 9px 15px;
-    border: 1px solid var(--ink); transition: background .15s, color .15s;
+    background: var(--blue); color: #fff; padding: 10px 16px;
+    border: 1px solid var(--blue); white-space: nowrap;
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+    display: inline-block;
   }
-  .go:hover { background: var(--lime); border-color: var(--lime); color: var(--ink); }
-  .go.ghost { background: none; color: var(--ink); }
-  .go.ghost:hover { background: var(--ink); color: var(--paper); }
+  .go:hover { background: var(--yellow); border-color: var(--yellow); color: var(--ink); transform: translateY(-1px); }
+  .go.ghost { background: none; color: var(--ink); border-color: var(--ink); }
+  .go.ghost:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
-  /* View on GitHub, with the live count in its own cell */
-  .gh {
-    display: none; align-items: stretch;
-    font-family: var(--mono); font-size: 11.5px; font-weight: 600;
-    letter-spacing: .05em; text-decoration: none;
-    border: 1px solid var(--ink); color: var(--ink);
-    background: var(--paper2); transition: background .15s;
+  :focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+
+  /* ── swipe reveal ────────────────────────────────────── */
+  .sr { position: relative; display: inline-block; overflow: hidden; vertical-align: bottom; }
+  .sr-in { display: inline-block; }
+  .sr + .sr { margin-left: .2em; }
+  .sr-bar {
+    position: absolute; inset: 0; background: var(--ink);
+    transform: scaleX(0); transform-origin: left center; pointer-events: none;
   }
-  @media (min-width: 620px) { .gh { display: inline-flex; } }
-  .gh .mkgh { padding: 9px 13px; white-space: nowrap; }
-  .gh .n { padding: 9px 12px; border-left: 1px solid var(--ink); background: var(--paper); font-variant-numeric: tabular-nums; }
-  .gh:hover, .gh:hover .n { background: var(--lime); }
+  .sr.blue .sr-bar { background: var(--blue); }
+  .sr.yell .sr-bar { background: var(--yellow); }
 
-  /* ── swipe reveal: the site's repeated device ─────────── */
-  .sr { position: relative; display: block; overflow: hidden; }
-  .sr > .sr-in { display: block; }
-  .sr > .sr-bar {
-    position: absolute; inset: 0;
-    background: var(--ink);
-    transform: scaleX(0); transform-origin: left center;
-    pointer-events: none;
-  }
-  .sr.lime   > .sr-bar { background: var(--lime); }
-  .sr.blue   > .sr-bar { background: var(--blue); }
-  .sr.orange > .sr-bar { background: var(--orange); }
-
-  /* ── raster display ──────────────────────────────────── */
   .slab {
-    font-family: var(--raster); font-weight: 400;
-    line-height: .86; letter-spacing: -.015em;
-    margin: 0; text-transform: uppercase; display: block;
+    font-family: var(--raster); font-weight: 700;
+    line-height: .96; letter-spacing: -.02em; text-transform: lowercase;
   }
-  .xl  { font-size: 17vw; }
-  .lg  { font-size: 13.5vw; }
-  .md  { font-size: 10vw; }
-  .sec { font-size: 7.5vw; }
-  @media (min-width: 1100px) {
-    .xl { font-size: 15.5vw; } .lg { font-size: 12vw; }
-    .md { font-size: 8vw; }   .sec { font-size: 5.4vw; }
-  }
+  .xl { font-size: clamp(54px, 17vw, 250px); }
+  .lg { font-size: clamp(44px, 13.5vw, 198px); }
+  .md { font-size: clamp(34px, 10vw, 146px); }
+  .sec { font-size: clamp(27px, 6.2vw, 82px); }
+
+  .on-blue { background: var(--blue); color: #fff; padding-inline: .1em; }
+  .on-yell { background: var(--yellow); color: var(--ink); padding-inline: .1em; }
   .hollow { color: transparent; -webkit-text-stroke: 2px var(--ink); }
-  .on-lime   { color: var(--lime); }
-  .on-blue   { color: var(--blue); }
-  .on-orange { color: var(--orange); }
+  .stack { display: flex; flex-direction: column; gap: .02em; }
+  .line { display: block; }
 
   /* ── hero ────────────────────────────────────────────── */
-  .hero { padding-top: 96px; padding-bottom: clamp(24px,4vw,54px); }
+  .hero { padding-top: 104px; padding-bottom: 20px; }
 
-  .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: clamp(18px,3vw,34px); }
+  .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 22px; }
   .tag {
-    font-family: var(--mono); font-size: 10px; letter-spacing: .13em;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .09em;
     text-transform: uppercase; color: var(--ink2);
     border: 1px solid var(--rule); padding: 4px 9px; background: var(--paper2);
   }
-  .tag.l { border-color: var(--lime); color: #0a6a44; background: #e4f7ee; }
-  .tag.b { border-color: var(--blue); color: var(--blue); background: #ebe9fd; }
-  .tag.o { border-color: var(--orange); color: #b5300f; background: #ffede8; }
-
-  .stack { display: grid; gap: clamp(2px,.6vw,8px); }
-  .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 clamp(8px,2vw,30px); }
+  .tag.b { border-color: var(--blue); color: var(--blue); }
+  .tag.y { border-color: #c9a200; color: #7a6200; background: #fff8dd; }
 
   .herofoot {
-    display: grid; grid-template-columns: 1fr; gap: 22px;
-    margin-top: clamp(26px,4vw,46px); align-items: end;
+    display: grid; grid-template-columns: 1fr; gap: 26px;
+    margin-top: 34px; padding-top: 26px; border-top: 1px solid var(--rule);
   }
-  @media (min-width: 900px) { .herofoot { grid-template-columns: 1.1fr 1fr; gap: 44px; } }
+  @media (min-width: 900px) { .herofoot { grid-template-columns: 1.05fr 1fr; gap: 46px; } }
+  /* Grid items default to min-width:auto, so the long curl URL below would
+     otherwise stretch the column past the screen on a phone. */
+  .herofoot > * { min-width: 0; }
 
-  .lede { font-family: var(--mono); font-size: clamp(.92rem,1.5vw,1.05rem); line-height: 1.62; color: var(--ink2); margin: 0; max-width: 50ch; }
+  .lede { font-size: clamp(16px, 1.5vw, 20px); line-height: 1.5; color: var(--ink2); margin: 0; max-width: 58ch; }
 
-  .cmd { display: flex; border: 1px solid var(--ink); background: var(--paper2); }
-  .cmd code { flex: 1; font-family: var(--mono); font-size: 11.5px; padding: 12px 13px; white-space: nowrap; overflow-x: auto; }
-  .cmd code b { color: var(--lime); }
+  .cmd {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--navy); color: var(--screen-ink);
+    font-family: var(--mono); font-size: 12px;
+    padding: 12px 13px; overflow: hidden;
+  }
+  .cmd code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .cmd b { color: var(--yellow); }
   .cmd button {
-    font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .1em;
-    text-transform: uppercase; border: 0; border-left: 1px solid var(--ink);
-    background: var(--ink); color: var(--paper); padding-inline: 15px; cursor: pointer;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+    background: none; border: 1px solid #2d3d59; color: var(--screen-ink);
+    padding: 5px 10px; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
   }
-  .cmd button:hover { background: var(--lime); color: var(--ink); }
-  .acts { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+  .cmd button:hover { background: var(--yellow); border-color: var(--yellow); color: var(--ink); }
+  .acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 
   /* ── terminal ────────────────────────────────────────── */
-  .term { border: 1px solid var(--ink); background: var(--screen); margin-top: clamp(26px,4vw,52px); }
-  .tbar { display: flex; align-items: center; gap: 6px; padding: 8px 11px; border-bottom: 1px solid #332838; font-family: var(--mono); font-size: 10px; color: #7d6f84; }
-  .tbar i { width: 9px; height: 9px; border-radius: 50%; display: block; }
-  .tbar span { flex: 1; text-align: center; margin-right: 34px; }
-  .term pre { margin: 0; padding: 13px 15px 15px; font-family: var(--mono); font-size: 10px; line-height: 1.55; color: var(--screen-ink); overflow-x: auto; min-height: 220px; }
-  @media (min-width: 700px) { .term pre { font-size: 12.5px; } }
-  .tb{color:#6a5c71}.tt{color:#7fb2ff;font-weight:600}.ts{color:#4fd6a0;font-weight:600}
-  .tk{color:#4fd6a0;font-weight:600}.tl{color:#4fd6a0}.th{color:#7d6f84}
+  .term {
+    margin-top: 40px; background: var(--navy);
+    border: 1px solid var(--navy); box-shadow: 0 26px 60px rgba(8,21,43,.26);
+    overflow: hidden;
+  }
+  .tbar {
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 13px; background: #0c1a30; border-bottom: 1px solid #17263f;
+  }
+  .tbar i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+  .tbar span { margin-left: auto; margin-right: auto; font-family: var(--mono); font-size: 11px; color: #64769a; }
+  .term pre {
+    margin: 0; padding: 16px clamp(10px, 2vw, 22px);
+    font-family: var(--mono); font-size: clamp(6.4px, 1.06vw, 13px);
+    line-height: 1.5; color: var(--screen-ink); overflow-x: auto;
+  }
+  .term .tb { color: #3e527a; }
+  .term .th { color: #64769a; }
+  .term .ty { color: var(--yellow); }
+  .term .tl { color: var(--blue2); }
 
   /* ── sections ────────────────────────────────────────── */
-  section { border-top: 1px solid var(--ink); padding-block: clamp(46px,7vw,110px); }
-  section.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-  section.dark .slab { color: var(--paper); }
-  section.dark .hollow { color: transparent; -webkit-text-stroke-color: var(--paper); }
-  section.dark p.body { color: #bdb9b4; }
-  section.dark p.body strong { color: var(--paper); }
+  section { padding-block: clamp(64px, 9vw, 128px); border-top: 1px solid var(--rule); }
+  section.dark { background: var(--navy); color: var(--screen-ink); border-top-color: var(--navy); }
+  section.dark .hollow { -webkit-text-stroke-color: var(--screen-ink); }
+  section.dark .sr-bar { background: var(--screen-ink); }
+  section.dark .sr.yell .sr-bar { background: var(--yellow); }
 
-  .head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: clamp(22px,3vw,40px); }
-  .head .no { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--faint); padding-top: 8px; flex: none; }
+  .head { display: flex; gap: clamp(12px, 2.4vw, 30px); align-items: flex-start; margin-bottom: 30px; }
+  .no { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--faint); padding-top: .55em; white-space: nowrap; }
+  .body { font-size: clamp(15px, 1.28vw, 18px); line-height: 1.58; max-width: 62ch; color: var(--ink2); margin: 0 0 15px; }
+  section.dark .body { color: #9fb0cb; }
+  section.dark .body strong { color: var(--screen-ink); }
 
-  p.body { font-size: clamp(.95rem,1.4vw,1.05rem); line-height: 1.6; color: var(--ink2); max-width: 60ch; margin: 0 0 14px; }
-  p.body strong { color: var(--ink); font-weight: 600; }
-  code.i { font-family: var(--mono); font-size: .87em; background: var(--paper2); border: 1px solid var(--rule); padding: 0 4px; }
-  section.dark code.i { background: #2a2a28; border-color: #444; color: var(--paper); }
+  code.i {
+    font-family: var(--mono); font-size: .87em;
+    background: var(--paper2); border: 1px solid var(--rule); padding: 1px 5px;
+  }
+  section.dark code.i { background: #0d1a2f; border-color: #1e3050; color: var(--yellow); }
 
-  /* ── dossier cells ───────────────────────────────────── */
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); border: 1px solid var(--ink); }
-  .cell { border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 20px; background: var(--paper2); transition: background .15s; }
-  .cell:hover { background: var(--lime); }
-  .cell h4 { font-family: var(--raster); font-size: 12.5px; font-weight: 400; margin: 0 0 9px; }
-  .cell p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink2); }
-  .cell:hover p, .cell:hover h4 { color: var(--ink); }
-  .cell kbd { font-family: var(--mono); font-size: 11px; background: var(--paper); border: 1px solid var(--ink); padding: 1px 5px; }
+  /* ── key grid ────────────────────────────────────────── */
+  .grid { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  @media (min-width: 620px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  .cell { background: var(--paper2); padding: 22px 20px 24px; transition: background .18s; }
+  .cell:hover { background: #fff; }
+  .cell h4 {
+    margin: 0 0 9px; font-family: var(--mono); font-size: 11px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--blue);
+  }
+  .cell p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--ink2); }
+  kbd {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+    background: var(--ink); color: var(--paper2);
+    border-radius: 3px; padding: 2px 6px; margin-right: 2px; display: inline-block;
+  }
+
+  /* ── split ───────────────────────────────────────────── */
+  .split { display: grid; grid-template-columns: 1fr; gap: 30px; align-items: center; }
+  @media (min-width: 900px) { .split { grid-template-columns: 1fr 1fr; gap: 54px; } }
+  .split > * { min-width: 0; }
+
+  .pad {
+    background: var(--navy); color: var(--screen-ink);
+    font-family: var(--mono); font-size: clamp(12px, 1.15vw, 14.5px); line-height: 1.75;
+    padding: 26px 24px; min-height: 250px; overflow-x: auto;
+    box-shadow: 0 18px 44px rgba(8,21,43,.2);
+  }
+  .pad .mk { color: var(--yellow); }
+  .pad .cur { background: var(--screen-ink); display: inline-block; width: .55em; animation: blink 1.05s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .pad .cur { animation: none; } }
 
   /* ── ledger ──────────────────────────────────────────── */
-  .ledger { border: 1px solid currentColor; }
-  .lrow { display: grid; grid-template-columns: 1fr auto; gap: 14px; padding: 13px 17px; border-bottom: 1px solid var(--rule); font-family: var(--mono); font-size: 12.5px; align-items: baseline; }
-  section.dark .lrow { border-bottom-color: #3a3a38; }
-  .lrow:last-child { border-bottom: 0; }
-  .lrow b { font-family: var(--raster); font-size: 14px; font-weight: 400; }
-  .lrow .bar { grid-column: 1 / -1; height: 3px; background: var(--rule); margin-top: 6px; }
-  section.dark .lrow .bar { background: #3a3a38; }
-  .lrow .bar i { display: block; height: 100%; width: 0; background: var(--orange); }
-  .lrow.us { background: var(--lime); color: var(--ink); }
-  .lrow.us b { color: var(--ink); }
-  .lrow.us .bar { background: rgba(0,0,0,.2); }
-  .lrow.us .bar i { background: var(--ink); }
-
-  /* ── split + pad ─────────────────────────────────────── */
-  .split { display: grid; grid-template-columns: 1fr; gap: 26px; align-items: start; }
-  @media (min-width: 960px) { .split { grid-template-columns: 1fr 1.05fr; gap: 46px; } }
-  .pad { background: var(--screen); border: 1px solid var(--ink); padding: 18px 20px; min-height: 200px; font-family: var(--mono); font-size: 12.5px; line-height: 2; color: var(--screen-ink); overflow-x: auto; }
-  @media (min-width: 620px) { .pad { font-size: 14px; } }
-  .pad .mk { color: #4fd6a0; font-weight: 600; }
-  .pad .cur { display: inline-block; width: 8px; background: #4fd6a0; animation: blink 1.05s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0 } }
-
-  /* ── browser window mock ─────────────────────────────── */
-  .browser { border: 1px solid var(--ink); background: #fff; overflow: hidden; }
-  .bbar {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 11px; background: #e7e5e2; border-bottom: 1px solid var(--ink);
+  .ledger { border-top: 1px solid #1e3050; }
+  .lrow {
+    display: grid; grid-template-columns: 1fr auto; gap: 6px 16px;
+    align-items: center; padding: 15px 0; border-bottom: 1px solid #1e3050;
+    font-family: var(--mono); font-size: clamp(12px, 1.15vw, 14px);
   }
-  .bbar i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+  @media (min-width: 760px) { .lrow { grid-template-columns: 1fr 92px 44%; } }
+  .lrow span:first-child { color: #9fb0cb; }
+  .lrow b { color: var(--screen-ink); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .lrow .bar { grid-column: 1 / -1; height: 8px; background: #12233c; display: block; }
+  @media (min-width: 760px) { .lrow .bar { grid-column: auto; } }
+  .lrow .bar i { display: block; height: 100%; width: 0; background: #31507f; }
+  .lrow.us span:first-child, .lrow.us b { color: var(--yellow); }
+  .lrow.us .bar i { background: var(--yellow); }
+
+  /* ── stat cards ──────────────────────────────────────── */
+  .stats { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  @media (min-width: 560px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  .stat { background: var(--paper2); padding: 24px 20px 22px; }
+  .stat .k {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--faint); margin-bottom: 12px;
+  }
+  .stat .v {
+    font-family: var(--raster); font-size: clamp(26px, 3.1vw, 40px);
+    line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+  .stat .v small { font-family: var(--mono); font-size: 13px; color: var(--ink2); margin-left: 4px; letter-spacing: 0; }
+  .stat .d { margin-top: 11px; font-size: 13.5px; line-height: 1.5; color: var(--ink2); }
+  .stat.lead { background: var(--blue); }
+  .stat.lead .k { color: #b9c9ff; }
+  .stat.lead .v { color: var(--yellow); }
+  .stat.lead .v small, .stat.lead .d { color: #d7e1ff; }
+
+  .caveat {
+    margin-top: 22px; padding: 16px 18px; background: var(--paper2);
+    border-left: 3px solid var(--yellow); font-size: 14px; line-height: 1.6; color: var(--ink2);
+    max-width: 74ch;
+  }
+
+  /* ── api table ───────────────────────────────────────── */
+  .api { border-top: 1px solid #1e3050; font-family: var(--mono); }
+  .arow {
+    display: grid; grid-template-columns: 62px 1fr; gap: 4px 14px;
+    padding: 13px 0; border-bottom: 1px solid #1e3050;
+    font-size: clamp(11.5px, 1.1vw, 13.5px); align-items: baseline;
+  }
+  @media (min-width: 780px) { .arow { grid-template-columns: 72px 240px 1fr; } }
+  .arow .m { font-weight: 600; color: var(--yellow); letter-spacing: .04em; }
+  .arow .p { color: var(--screen-ink); word-break: break-all; }
+  .arow .w { color: #8397b5; grid-column: 1 / -1; }
+  @media (min-width: 780px) { .arow .w { grid-column: auto; } }
+
+  .snippet {
+    margin-top: 26px; background: #0c1a30; border: 1px solid #1e3050;
+    padding: 18px 20px; overflow-x: auto; white-space: pre;
+    font-family: var(--mono); font-size: clamp(11.5px, 1.05vw, 13px); line-height: 1.75;
+    color: var(--screen-ink);
+  }
+  .snippet .c { color: #64769a; }
+  .snippet .y { color: var(--yellow); }
+
+  /* ── browser mock ────────────────────────────────────── */
+  .browser {
+    background: var(--paper2); border: 1px solid var(--rule);
+    box-shadow: 0 20px 50px rgba(8,21,43,.16); overflow: hidden;
+  }
+  .bbar { display: flex; align-items: center; gap: 7px; padding: 9px 12px; background: #e2e7f1; border-bottom: 1px solid var(--rule); }
+  .bbar i { width: 10px; height: 10px; border-radius: 50%; display: block; }
   .burl {
-    flex: 1; background: #fff; border: 1px solid var(--rule);
-    border-radius: 3px; padding: 3px 9px;
-    font-family: var(--mono); font-size: 10.5px; color: var(--ink2);
-    text-align: center; margin-inline: 6px; white-space: nowrap; overflow: hidden;
+    margin-left: 8px; flex: 1; background: var(--paper2); border: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 11px; color: var(--ink2); padding: 4px 9px;
   }
-  .burl b { color: var(--lime); font-weight: 600; }
-
-  .bbody { display: grid; grid-template-columns: 1fr; min-height: 300px; }
-  @media (min-width: 720px) { .bbody { grid-template-columns: 188px 1fr; } }
-
-  .bside { border-right: 1px solid var(--rule); background: #fafafa; padding: 12px; display: none; }
-  @media (min-width: 720px) { .bside { display: block; } }
-  .bside .t { font-size: 12.5px; font-weight: 700; margin-bottom: 9px; display: flex; align-items: center; gap: 6px; }
-  .bnew {
-    display: block; text-align: center; font-size: 11px; font-weight: 600;
-    background: var(--ink); color: #fff; border-radius: 5px; padding: 6px; margin-bottom: 8px;
-  }
-  .bsearch { font-size: 11px; color: #9a9a98; border: 1px solid var(--rule); border-radius: 5px; padding: 5px 8px; margin-bottom: 10px; }
-  .bitem { font-size: 11.5px; padding: 6px 8px; border-radius: 5px; color: var(--ink2); }
-  .bitem.on { background: #fff; border: 1px solid var(--rule); color: var(--ink); font-weight: 600; }
-  .bitem small { display: block; font-size: 10px; color: #a3a3a1; font-weight: 400; }
-
-  .bmain { padding: 14px 16px; }
-  .btitle { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
-  .btabs { display: inline-flex; background: #f1f1ef; border-radius: 6px; padding: 2px; margin-bottom: 10px; }
-  .btab { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 4px; color: #8a8a88; }
-  .btab.on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-  .btools {
-    display: flex; flex-wrap: wrap; gap: 2px; padding: 4px;
-    border: 1px solid var(--rule); border-radius: 6px; background: #fafafa; margin-bottom: 10px;
-  }
+  .burl b { color: var(--blue); }
+  .bbody { display: grid; grid-template-columns: 1fr; }
+  @media (min-width: 540px) { .bbody { grid-template-columns: 150px 1fr; } }
+  .bside { border-right: 1px solid var(--rule); padding: 12px 10px; background: #f2f5fa; font-size: 12px; }
+  .bside .t { font-family: var(--mono); font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; }
+  .bnew { background: var(--blue); color: #fff; text-align: center; padding: 6px; font-size: 11.5px; font-weight: 600; margin-bottom: 9px; }
+  .bsearch { border: 1px solid var(--rule); background: var(--paper2); color: var(--faint); padding: 5px 8px; font-size: 11px; margin-bottom: 10px; }
+  .bitem { padding: 7px 8px; border-bottom: 1px solid #e4e9f2; line-height: 1.3; }
+  .bitem small { display: block; color: var(--faint); font-size: 10px; margin-top: 2px; }
+  .bitem.on { background: #fff; border-left: 3px solid var(--yellow); font-weight: 600; }
+  .bmain { padding: 14px 16px 20px; }
+  .btitle { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+  .btabs { display: flex; gap: 4px; margin-bottom: 10px; }
+  .btab { font-family: var(--mono); font-size: 10.5px; padding: 4px 11px; border: 1px solid var(--rule); color: var(--ink2); }
+  .btab.on { background: var(--ink); color: var(--paper2); border-color: var(--ink); }
+  .btools { display: flex; flex-wrap: wrap; gap: 3px; padding-bottom: 11px; border-bottom: 1px solid var(--rule); margin-bottom: 13px; }
   .btool {
+    width: 25px; height: 25px; display: grid; place-items: center;
+    border: 1px solid var(--rule); background: var(--paper2);
     font-family: var(--mono); font-size: 11px; color: var(--ink2);
-    width: 24px; height: 22px; display: grid; place-items: center; border-radius: 4px;
   }
-  .btool:hover { background: #eee; color: var(--ink); }
-  .bsep { width: 1px; background: var(--rule); margin-inline: 5px; }
-  .bdoc { font-size: 12.5px; line-height: 1.75; color: #2b2b29; }
-  .bdoc h5 { font-size: 15px; margin: 0 0 7px; }
-  .bdoc .task { display: flex; gap: 7px; align-items: baseline; }
-  .bdoc .box { font-family: var(--mono); color: var(--lime); font-weight: 700; }
-  .bdoc .box.off { color: #b6b6b4; }
-  .bdoc blockquote { margin: 9px 0; padding-left: 10px; border-left: 3px solid var(--rule); color: #6f6f6d; }
-  .bdoc a { color: var(--blue); }
+  .bsep { width: 1px; background: var(--rule); margin-inline: 4px; }
+  .bdoc { font-size: 13.5px; line-height: 1.6; }
+  .bdoc h5 { margin: 0 0 9px; font-size: 15px; }
+  .task { display: flex; gap: 8px; margin-bottom: 5px; align-items: baseline; }
+  .task .box { font-family: var(--mono); color: var(--blue); font-weight: 600; }
+  .task .box.off { color: var(--faint); }
+  .bdoc blockquote { margin: 11px 0; padding-left: 11px; border-left: 3px solid var(--yellow); color: var(--ink2); }
+  .bdoc a { color: var(--blue); text-underline-offset: 2px; }
 
   /* ── footer ──────────────────────────────────────────── */
-  footer { background: var(--ink); color: var(--paper); padding-block: clamp(40px,6vw,80px) 34px; }
-  footer .acts { margin-top: 26px; }
-  footer .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; font-family: var(--mono); font-size: 11px; color: #b3b0ac; margin-top: 30px; border-top: 1px solid #3a3a38; padding-top: 18px; }
-  footer a { color: var(--paper); }
-  footer .g { color: var(--lime); }
-
-  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; transition: none !important; }
-    .sr::after { display: none; }
+  footer { background: var(--navy); color: var(--screen-ink); padding-block: clamp(58px, 8vw, 104px); }
+  footer .sr-bar { background: var(--screen-ink); }
+  footer .sr.yell .sr-bar { background: var(--yellow); }
+  footer .acts { margin-top: 30px; }
+  footer .meta {
+    margin-top: 44px; padding-top: 20px; border-top: 1px solid #1e3050;
+    display: flex; flex-wrap: wrap; gap: 10px 28px;
+    font-family: var(--mono); font-size: 11.5px; color: #8397b5;
   }
+  footer .meta .y { color: var(--yellow); }
+  footer .meta a { color: #8397b5; text-decoration: none; }
+  footer .meta a:hover { color: var(--yellow); }
 </style>
 </head>
 <body>
 
-<div class="strip" aria-hidden="true">
-  <ul id="mq"><li>
-    <span>NIB v1.2.0</span><span class="g">///</span><span>NOTHING LEAVES THIS MACHINE</span><span class="g">///</span>
-    <span>NO ACCOUNT</span><span class="g">///</span><span>NO CLOUD</span><span class="g">///</span>
-    <span>NO TELEMETRY</span><span class="g">///</span><span>ONE FILE ON YOUR DISK</span><span class="g">///</span>
-    <span>19 MB</span><span class="g">///</span><span>MIT</span><span class="g">///</span>
-  </li></ul>
+<div id="prog"></div>
+
+<div class="strip">
+  <ul id="mq">
+    <li>
+      <span>ONE BINARY</span><span class="y">◆</span>
+      <span>TWO INTERFACES</span><span class="y">◆</span>
+      <span>19 MB</span><span class="y">◆</span>
+      <span>18.7 MS TO READY</span><span class="y">◆</span>
+      <span>NO ACCOUNT</span><span class="y">◆</span>
+      <span>NO CLOUD</span><span class="y">◆</span>
+      <span>NO TELEMETRY</span><span class="y">◆</span>
+      <span>MIT LICENSED</span><span class="y">◆</span>
+    </li>
+  </ul>
 </div>
 
 <nav>
@@ -312,11 +412,12 @@
     <a class="mark" href="#top"><i>$</i> nib</a>
     <div class="fill"></div>
     <div class="navlinks">
-      <a href="#file">The file</a><a href="#lists">Lists</a>
-      <a href="#speed">Speed</a><a href="#custody">Custody</a><a href="#browser">Browser</a>
+      <a href="#file">Keys</a><a href="#lists">Lists</a>
+      <a href="#speed">Speed</a><a href="#cost">Cost</a>
+      <a href="#custody">Custody</a><a href="#browser">Browser</a><a href="#api">API</a>
     </div>
     <a class="gh" href="https://github.com/Prathmeshgumal/nib">
-      <span class="mkgh">★ View on GitHub</span><span class="n" id="gh-stars">—</span>
+      <span>★ View on GitHub</span><span class="n" id="gh-stars">—</span>
     </a>
     <a class="go" href="https://github.com/Prathmeshgumal/nib/releases/latest">Download</a>
   </div>
@@ -325,21 +426,21 @@
 <main id="top">
   <div class="wrap hero">
     <div class="tags">
-      <span class="tag l">[ STATUS: SHIPPED ]</span>
-      <span class="tag">[ FILE: v1.2.0 ]</span>
-      <span class="tag b">[ PLATFORM: LINUX ]</span>
-      <span class="tag o">[ CLEARANCE: NONE REQUIRED ]</span>
+      <span class="tag b">[ STATUS: SHIPPED ]</span>
+      <span class="tag">[ VERSION: v1.2.0 ]</span>
+      <span class="tag">[ PLATFORM: LINUX ]</span>
+      <span class="tag y">[ CLEARANCE: NONE REQUIRED ]</span>
     </div>
 
     <h1 class="stack" style="margin:0">
       <span class="line">
         <span class="sr"><span class="sr-in slab lg">Your</span></span>
-        <span class="sr lime"><span class="sr-in slab lg on-lime">notes</span></span>
+        <span class="sr blue"><span class="sr-in slab lg on-blue">notes</span></span>
       </span>
       <span class="line"><span class="sr"><span class="sr-in slab xl hollow">never</span></span></span>
       <span class="line">
         <span class="sr"><span class="sr-in slab md">leave</span></span>
-        <span class="sr blue"><span class="sr-in slab md on-blue">this</span></span>
+        <span class="sr yell"><span class="sr-in slab md on-yell">this</span></span>
       </span>
       <span class="line"><span class="sr"><span class="sr-in slab lg">machine.</span></span></span>
     </h1>
@@ -377,20 +478,24 @@
       <div class="head">
         <span class="no">[ 01 ]</span>
         <div>
-          <span class="sr"><span class="sr-in slab sec">Contents</span></span>
-          <span class="sr orange"><span class="sr-in slab sec on-orange">of the file</span></span>
+          <span class="sr"><span class="sr-in slab sec">Every key,</span></span>
+          <span class="sr blue"><span class="sr-in slab sec on-blue">no menus</span></span>
         </div>
       </div>
-      <p class="body" style="margin-bottom:26px">
-        Two panes, driven entirely from the keyboard. Press <code class="i">?</code>
-        and every key is listed without leaving the app.
+      <p class="body" style="margin-bottom:28px">
+        The note you are reading fills the screen. Down the right-hand side sits a
+        small box of facts about it, and under that, the list of everything else.
+        Press <code class="i">?</code> and every key is listed without leaving the app.
       </p>
       <div class="grid">
         <div class="cell"><h4>Move</h4><p><kbd>j</kbd> <kbd>k</kbd> between notes. <kbd>↑</kbd><kbd>↓</kbd> scroll the one you are reading — so the wheel does too.</p></div>
         <div class="cell"><h4>Write</h4><p><kbd>n</kbd> for a new note, <kbd>↵</kbd> to edit. Leave the title blank and the first line becomes it.</p></div>
         <div class="cell"><h4>Format</h4><p>Bold, italic, strikethrough, code, headings, three kinds of list, quotes and rules — all on keys.</p></div>
-        <div class="cell"><h4>Search</h4><p><kbd>/</kbd> narrows titles and bodies as you type. Four milliseconds across a thousand notes.</p></div>
+        <div class="cell"><h4>Search</h4><p><kbd>/</kbd> narrows titles and bodies as you type. Under five milliseconds across a thousand notes.</p></div>
         <div class="cell"><h4>Recover</h4><p><kbd>d</kbd> moves a note to a trash. <kbd>u</kbd> walks back, <kbd>T</kbd> browses thirty days of them.</p></div>
+        <div class="cell"><h4>Copy</h4><p><kbd>R</kbd> shows the raw Markdown with no borders, so a mouse selection is the text and nothing else.</p></div>
+        <div class="cell"><h4>Links</h4><p>The preview shows the link text, not the URL. Ctrl+click it, or press <kbd>o</kbd>.</p></div>
+        <div class="cell"><h4>Your editor</h4><p><kbd>e</kbd> opens the note straight in <code class="i">$EDITOR</code>; <kbd>ctrl+e</kbd> does it mid-edit.</p></div>
         <div class="cell"><h4>Browser</h4><p><kbd>w</kbd> opens the same notes in a React UI, served from inside the binary, bound to localhost.</p></div>
       </div>
     </div>
@@ -403,7 +508,7 @@
         <span class="no">[ 02 ]</span>
         <div>
           <span class="sr"><span class="sr-in slab sec">Lists finish</span></span>
-          <span class="sr lime"><span class="sr-in slab sec on-lime">themselves</span></span>
+          <span class="sr yell"><span class="sr-in slab sec on-yell">themselves</span></span>
         </div>
       </div>
       <div class="split">
@@ -431,13 +536,13 @@
   <section id="speed" class="dark">
     <div class="wrap">
       <div class="head">
-        <span class="no" style="color:#8d8b87">[ 03 ]</span>
+        <span class="no" style="color:#64769a">[ 03 ]</span>
         <div>
-          <span class="sr lime"><span class="sr-in slab sec">Nothing to</span></span>
-          <span class="sr lime"><span class="sr-in slab sec on-lime">boot first</span></span>
+          <span class="sr"><span class="sr-in slab sec">Nothing to</span></span>
+          <span class="sr yell"><span class="sr-in slab sec on-yell">boot first</span></span>
         </div>
       </div>
-      <p class="body" style="margin-bottom:26px">
+      <p class="body" style="margin-bottom:28px">
         Measured in one sitting on one machine, every row the same way — wall
         clock around a subprocess, median of twenty-five runs. The first four are
         what each runtime costs <strong>before a line of your code runs</strong>.
@@ -451,12 +556,12 @@
         <div class="lrow us"><span><strong>nib</strong> — opened 1,000 notes, ready to serve</span><b>18.7 ms</b><span class="bar"><i data-w="38"></i></span></div>
       </div>
 
-      <p class="body" style="margin-top:24px">
+      <p class="body" style="margin-top:26px">
         The last row is not a floor. It is the whole job — opening the database,
         reading every note, standing up the server — and it finishes before Node
         has started up with nothing in it at all.
       </p>
-      <p class="body" style="color:#8d8b87">
+      <p class="body" style="color:#64769a">
         Go is not magic; a careful Rust or C build would beat it. What Go buys is
         that the fast path is the default one.
       </p>
@@ -464,13 +569,79 @@
   </section>
 
   <!-- 04 ─────────────────────────────────────────────── -->
-  <section id="custody">
+  <section id="cost">
     <div class="wrap">
       <div class="head">
         <span class="no">[ 04 ]</span>
         <div>
+          <span class="sr"><span class="sr-in slab sec">What it costs</span></span>
+          <span class="sr blue"><span class="sr-in slab sec on-blue">your machine</span></span>
+        </div>
+      </div>
+      <p class="body" style="margin-bottom:28px">
+        Measured on an Intel i5-13450HX running Ubuntu, with a thousand notes in
+        the database.
+      </p>
+
+      <div class="stats" id="stats">
+        <div class="stat lead">
+          <div class="k">Ready with 1,000 notes</div>
+          <div class="v"><span data-count="18.7" data-dp="1">0</span><small>ms</small></div>
+          <div class="d">Median of 25 runs, 18–20 ms across them.</div>
+        </div>
+        <div class="stat">
+          <div class="k">Binary</div>
+          <div class="v"><span data-count="19.8" data-dp="1">0</span><small>MB</small></div>
+          <div class="d">Static and stripped. No runtime, no system libraries.</div>
+        </div>
+        <div class="stat">
+          <div class="k">Memory, terminal UI</div>
+          <div class="v"><span data-count="28" data-dp="0">0</span><small>MB</small></div>
+          <div class="d">The smallest Chrome renderer on the same machine was 155 MB.</div>
+        </div>
+        <div class="stat">
+          <div class="k">After you quit</div>
+          <div class="v">none</div>
+          <div class="d">No daemon, no background process, nothing left listening.</div>
+        </div>
+        <div class="stat">
+          <div class="k">Search across 1,000</div>
+          <div class="v"><span data-count="4.6" data-dp="1">0</span><small>ms</small></div>
+          <div class="d">Finishes inside a single frame at 60 Hz.</div>
+        </div>
+        <div class="stat">
+          <div class="k">Render a note</div>
+          <div class="v"><span data-count="71" data-dp="0">0</span><small>µs</small></div>
+          <div class="d">What moving the cursor actually costs.</div>
+        </div>
+        <div class="stat">
+          <div class="k">Disk, 1,000 notes</div>
+          <div class="v"><span data-count="528" data-dp="0">0</span><small>KB</small></div>
+          <div class="d">247 KB of that is the note text itself.</div>
+        </div>
+        <div class="stat">
+          <div class="k">CPU, open and idle</div>
+          <div class="v"><span data-count="1.4" data-dp="1">0</span><small>%</small></div>
+          <div class="d">Of one core. It is the render loop, and it is not zero.</div>
+        </div>
+      </div>
+
+      <p class="caveat">
+        These are real measurements, not estimates — but they are one machine on
+        one afternoon, with everything in the page cache. Run them yourself and
+        the absolute numbers will differ. The ratios are the part that travels.
+      </p>
+    </div>
+  </section>
+
+  <!-- 05 ─────────────────────────────────────────────── -->
+  <section id="custody">
+    <div class="wrap">
+      <div class="head">
+        <span class="no">[ 05 ]</span>
+        <div>
           <span class="sr"><span class="sr-in slab sec">Chain of</span></span>
-          <span class="sr orange"><span class="sr-in slab sec on-orange">custody</span></span>
+          <span class="sr yell"><span class="sr-in slab sec on-yell">custody</span></span>
         </div>
       </div>
       <div class="split">
@@ -481,30 +652,36 @@
             to export it from.
           </p>
           <p class="body">
+            Nothing is destroyed in a hurry either. A deleted note sits in a trash
+            for thirty days, and the database is snapshotted every time the app
+            starts, keeping the last ten.
+          </p>
+          <p class="body">
             The browser interface binds to <code class="i">127.0.0.1</code>, so
             nothing else on your network can reach it. No telemetry, no sync, no
             server, no account to create.
           </p>
-          <div class="tags" style="margin-top:20px;margin-bottom:0">
-            <span class="tag">[ SNAPSHOT ON EVERY LAUNCH ]</span>
+          <div class="tags" style="margin-top:22px;margin-bottom:0">
+            <span class="tag b">[ SNAPSHOT ON EVERY LAUNCH ]</span>
             <span class="tag">[ 30-DAY TRASH ]</span>
           </div>
         </div>
-        <div class="pad" style="line-height:1.9;min-height:0">
-          <span style="color:#8c7d93">~/.local/share/nib/</span><br>
-          &nbsp;&nbsp;<span class="mk">nib.db</span><br>
-          &nbsp;&nbsp;<span class="mk">backups/</span><br><br>
-          <span style="color:#8c7d93">$ cp nib.db /somewhere/safe</span><br>
+        <div class="pad" style="line-height:1.95;min-height:0">
+          <span style="color:#64769a">~/.local/share/nib/</span><br>
+          &nbsp;&nbsp;<span class="mk">nib.db</span> <span style="color:#64769a">— every note</span><br>
+          &nbsp;&nbsp;<span class="mk">backups/</span> <span style="color:#64769a">— the last 10</span><br><br>
+          <span style="color:#64769a">$ cp nib.db /somewhere/safe</span><br>
           <span class="mk">done.</span>
         </div>
       </div>
     </div>
   </section>
-  <!-- 05 ─────────────────────────────────────────────── -->
+
+  <!-- 06 ─────────────────────────────────────────────── -->
   <section id="browser">
     <div class="wrap">
       <div class="head">
-        <span class="no">[ 05 ]</span>
+        <span class="no">[ 06 ]</span>
         <div>
           <span class="sr"><span class="sr-in slab sec">Same notes,</span></span>
           <span class="sr blue"><span class="sr-in slab sec on-blue">in a browser</span></span>
@@ -530,7 +707,7 @@
             this machine and nowhere else. Press <code class="i">w</code> again
             and the server stops.
           </p>
-          <div class="tags" style="margin-top:20px;margin-bottom:0">
+          <div class="tags" style="margin-top:22px;margin-bottom:0">
             <span class="tag b">[ LOCALHOST ONLY ]</span>
             <span class="tag">[ REACT + TAILWIND ]</span>
             <span class="tag">[ EMBEDDED IN THE BINARY ]</span>
@@ -580,29 +757,67 @@
       </div>
     </div>
   </section>
+
+  <!-- 07 ─────────────────────────────────────────────── -->
+  <section id="api" class="dark">
+    <div class="wrap">
+      <div class="head">
+        <span class="no" style="color:#64769a">[ 07 ]</span>
+        <div>
+          <span class="sr"><span class="sr-in slab sec">Your notes,</span></span>
+          <span class="sr yell"><span class="sr-in slab sec on-yell">scriptable</span></span>
+        </div>
+      </div>
+      <p class="body" style="margin-bottom:28px">
+        Whenever the web UI is running there is a small HTTP API beside it, on the
+        same notes. Enough to write one from a shell script, wire up a hotkey, or
+        pull everything out into a file.
+      </p>
+
+      <div class="api" id="api-rows">
+        <div class="arow"><span class="m">GET</span><span class="p">/api/notes</span><span class="w">List every note, newest first</span></div>
+        <div class="arow"><span class="m">GET</span><span class="p">/api/notes?q=term</span><span class="w">Search titles and bodies</span></div>
+        <div class="arow"><span class="m">GET</span><span class="p">/api/notes/:id</span><span class="w">Fetch one note</span></div>
+        <div class="arow"><span class="m">POST</span><span class="p">/api/notes</span><span class="w">Create — the title may be omitted, it comes from the first line</span></div>
+        <div class="arow"><span class="m">PUT</span><span class="p">/api/notes/:id</span><span class="w">Update, same shape</span></div>
+        <div class="arow"><span class="m">DELETE</span><span class="p">/api/notes/:id</span><span class="w">Move to the trash</span></div>
+        <div class="arow"><span class="m">GET</span><span class="p">/api/trash</span><span class="w">List what is still recoverable</span></div>
+        <div class="arow"><span class="m">POST</span><span class="p">/api/trash/:id</span><span class="w">Restore a note</span></div>
+      </div>
+
+      <div class="snippet"><span class="c">$</span> nib --web &amp;
+<span class="c">$</span> curl localhost:4321/api/notes
+<span class="c">$</span> curl -X POST localhost:4321/api/notes \
+    -H <span class="y">'Content-Type: application/json'</span> \
+    -d <span class="y">'{"content": "# From the shell"}'</span></div>
+
+      <p class="body" style="margin-top:26px;color:#64769a">
+        The trash routes only act on trashed notes — a live note returns 404, so
+        nothing can be destroyed without being trashed first.
+      </p>
+    </div>
+  </section>
 </main>
 
 <footer>
   <div class="wrap">
     <div class="stack">
-      <span class="line"><span class="sr lime"><span class="sr-in slab md">Take it.</span></span></span>
-      <span class="line"><span class="sr lime"><span class="sr-in slab md on-lime">It's free.</span></span></span>
+      <span class="line"><span class="sr"><span class="sr-in slab md">Take it.</span></span></span>
+      <span class="line"><span class="sr yell"><span class="sr-in slab md on-yell">It's free.</span></span></span>
     </div>
     <div class="acts">
-      <a class="go" style="background:var(--lime);border-color:var(--lime);color:var(--ink)" href="https://github.com/Prathmeshgumal/nib/releases/latest">Download v1.2.0</a>
-      <a class="go" style="background:none;color:var(--paper);border-color:var(--paper)" href="https://github.com/Prathmeshgumal/nib">GitHub</a>
+      <a class="go" style="background:var(--yellow);border-color:var(--yellow);color:var(--ink)" href="https://github.com/Prathmeshgumal/nib/releases/latest">Download v1.2.0</a>
+      <a class="go" style="background:none;color:var(--screen-ink);border-color:#2d3d59" href="https://github.com/Prathmeshgumal/nib">GitHub</a>
     </div>
     <div class="meta">
       <span>MIT</span>
-      <span>Go <span class="g">+</span> Bubble Tea <span class="g">+</span> SQLite <span class="g">+</span> React</span>
+      <span>Go <span class="y">+</span> Bubble Tea <span class="y">+</span> SQLite <span class="y">+</span> React</span>
       <span><a href="https://github.com/Prathmeshgumal/nib">github.com/Prathmeshgumal/nib</a></span>
     </div>
   </div>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-</body>
-</html>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
 (function () {
@@ -610,6 +825,36 @@
 
   var mq = document.getElementById('mq');
   if (mq) mq.appendChild(mq.firstElementChild.cloneNode(true));
+
+  /* ── scroll progress, and the nav hardening its edge once you move ── */
+  var prog = document.getElementById('prog'), navEl = document.querySelector('nav');
+  function onScroll() {
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    if (prog) prog.style.transform = 'scaleX(' + (h > 0 ? window.scrollY / h : 0) + ')';
+    if (navEl) navEl.classList.toggle('stuck', window.scrollY > 40);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ── mark the nav link for whichever section you are looking at ── */
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.navlinks a'));
+    if (!links.length || !('IntersectionObserver' in window)) return;
+    var byId = {};
+    links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var a = byId[e.target.id];
+        if (!a || !e.isIntersecting) return;
+        links.forEach(function (l) { l.classList.remove('on'); });
+        a.classList.add('on');
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    links.forEach(function (a) {
+      var s = document.getElementById(a.getAttribute('href').slice(1));
+      if (s) io.observe(s);
+    });
+  })();
 
   /* ── smooth scroll, written inline: Lenis is not on the allowed CDN ── */
   if (!reduced && window.matchMedia('(pointer: fine)').matches) {
@@ -652,7 +897,6 @@
         .to(bar, { scaleX: 0, duration: 0.42, ease: 'power3.inOut' });
     });
 
-    // bars in the ledger
     gsap.utils.toArray('#ledger .bar i').forEach(function (bar, i) {
       gsap.to(bar, {
         width: bar.dataset.w + '%', duration: 0.9, ease: 'power3.out', delay: i * 0.08,
@@ -660,32 +904,63 @@
       });
     });
 
-    // cells stagger in
     gsap.from('.cell', {
       opacity: 0, y: 18, duration: 0.5, stagger: 0.05, ease: 'power2.out',
       scrollTrigger: { trigger: '.grid', start: 'top 85%', once: true }
+    });
+
+    gsap.from('.stat', {
+      opacity: 0, y: 20, duration: 0.5, stagger: 0.06, ease: 'power2.out',
+      scrollTrigger: { trigger: '#stats', start: 'top 85%', once: true }
+    });
+
+    gsap.from('.arow', {
+      opacity: 0, x: -14, duration: 0.42, stagger: 0.045, ease: 'power2.out',
+      scrollTrigger: { trigger: '#api-rows', start: 'top 85%', once: true }
     });
   } else {
     document.querySelectorAll('.sr-in').forEach(function (n) { n.style.opacity = 1; });
     document.querySelectorAll('#ledger .bar i').forEach(function (b) { b.style.width = b.dataset.w + '%'; });
   }
 
+  /* ── the stat figures count up when they come into view ── */
+  (function () {
+    var nums = Array.prototype.slice.call(document.querySelectorAll('[data-count]'));
+    if (!nums.length) return;
+    function settle(n) { n.textContent = (+n.dataset.count).toFixed(+n.dataset.dp); }
+    if (reduced || !('IntersectionObserver' in window)) { nums.forEach(settle); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        var el = e.target, to = +el.dataset.count, dp = +el.dataset.dp, t0 = null;
+        requestAnimationFrame(function tick(ts) {
+          if (t0 === null) t0 = ts;
+          var p = Math.min((ts - t0) / 900, 1);
+          el.textContent = (to * (1 - Math.pow(1 - p, 3))).toFixed(dp);
+          if (p < 1) requestAnimationFrame(tick);
+        });
+      });
+    }, { threshold: 0.4 });
+    nums.forEach(function (n) { io.observe(n); });
+  })();
+
   /* ── hero terminal ── */
   var SCREEN = [
  '<span class="tb">╭──────────────────────────────────────────────────────╮╭──────────────────────────╮</span>',
- '│Meeting notes                                         ││Edited  just now          │',
+ '│<span class="tl">Meeting notes</span>                                         ││Edited  just now          │',
  '│                                                      ││Tasks   2 of 4 done       │',
  '│                                                      ││Length  30 words          │',
- '│  • [✓] Agree the date                                │╰──────────────────────────╯',
- '│  • [✓] Migration plan                                │╭──────────────────────────╮',
- '│  • [ ] Rollback steps                                ││Notes (5)                 │',
- '│  • [ ] Tell the team                                 ││▸ Meeting notes           │',
+ '│  • [<span class="ty">✓</span>] Agree the date                                │<span class="tb">╰──────────────────────────╯</span>',
+ '│  • [<span class="ty">✓</span>] Migration plan                                │<span class="tb">╭──────────────────────────╮</span>',
+ '│  • [ ] Rollback steps                                ││<span class="tl">Notes (5)</span>                 │',
+ '│  • [ ] Tell the team                                 ││<span class="ty">▸ Meeting notes</span>           │',
  '│                                                      ││  Shipping checklist      │',
  '│  │ Ship Thursday if CI is green.                     ││  Reading list            │',
  '│                                                      ││  Ideas                   │',
  '│                                                      ││  Welcome to nib          │',
  '│                                                      ││                          │',
- '╰──────────────────────────────────────────────────────╯╰──────────────────────────╯',
+ '<span class="tb">╰──────────────────────────────────────────────────────╯╰──────────────────────────╯</span>',
  '<span class="th"> j/k note  ↑/↓ scroll  ↵ edit  n new  / search  R source  o link  d trash  w web  ? help  q quit</span>'
   ];
   var screen = document.getElementById('screen');
@@ -728,18 +1003,17 @@
 
   /* ── live repo numbers, so the page ages with the project ── */
   (function () {
-    var els = [document.getElementById('gh-stars')];
-    if (!els[0]) return;
+    var el = document.getElementById('gh-stars');
+    if (!el) return;
     fetch('https://api.github.com/repos/Prathmeshgumal/nib')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
         if (!d) throw 0;
-        var n = d.stargazers_count;
-        els.forEach(function (el) { if (el) el.textContent = n; });
+        el.textContent = d.stargazers_count;
       })
       .catch(function () {
         // Rate-limited or offline: say nothing rather than show a wrong number.
-        els.forEach(function (el) { if (el) el.textContent = '★'; });
+        el.textContent = '★';
       });
   })();
 
