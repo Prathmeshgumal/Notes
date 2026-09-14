@@ -488,7 +488,7 @@
         Press <code class="i">?</code> and every key is listed without leaving the app.
       </p>
       <div class="grid">
-        <div class="cell"><h4>Move</h4><p><kbd>j</kbd> <kbd>k</kbd> between notes. <kbd>↑</kbd><kbd>↓</kbd> scroll the one you are reading — so the wheel does too.</p></div>
+        <div class="cell"><h4>Move</h4><p><kbd>w</kbd> <kbd>s</kbd> or <kbd>↑</kbd><kbd>↓</kbd> between notes — so the wheel does too. <kbd>j</kbd> <kbd>k</kbd> scroll the one you are reading.</p></div>
         <div class="cell"><h4>Write</h4><p><kbd>n</kbd> for a new note, <kbd>↵</kbd> to edit. Leave the title blank and the first line becomes it.</p></div>
         <div class="cell"><h4>Format</h4><p>Bold, italic, strikethrough, code, headings, three kinds of list, quotes and rules — all on keys.</p></div>
         <div class="cell"><h4>Search</h4><p><kbd>/</kbd> narrows titles and bodies as you type. Under five milliseconds across a thousand notes.</p></div>
@@ -496,7 +496,7 @@
         <div class="cell"><h4>Copy</h4><p><kbd>R</kbd> shows the raw Markdown with no borders, so a mouse selection is the text and nothing else.</p></div>
         <div class="cell"><h4>Links</h4><p>The preview shows the link text, not the URL. Ctrl+click it, or press <kbd>o</kbd>.</p></div>
         <div class="cell"><h4>Your editor</h4><p><kbd>e</kbd> opens the note straight in <code class="i">$EDITOR</code>; <kbd>ctrl+e</kbd> does it mid-edit.</p></div>
-        <div class="cell"><h4>Browser</h4><p><kbd>w</kbd> opens the same notes in a React UI, served from inside the binary, bound to localhost.</p></div>
+        <div class="cell"><h4>Browser</h4><p><kbd>W</kbd> opens the same notes in a React UI, served from inside the binary, bound to localhost.</p></div>
       </div>
     </div>
   </section>
@@ -691,7 +691,7 @@
       <div class="split" style="align-items:start">
         <div>
           <p class="body">
-            Press <code class="i">w</code> in the terminal and the same notes
+            Press <code class="i">W</code> in the terminal and the same notes
             open in a browser — a formatting toolbar, live preview and a
             light or dark theme, for the times you would rather point at
             something than remember a key.
@@ -704,7 +704,7 @@
           </p>
           <p class="body" style="color:var(--faint)">
             Bound to <code class="i">127.0.0.1</code>, so it is reachable from
-            this machine and nowhere else. Press <code class="i">w</code> again
+            this machine and nowhere else. Press <code class="i">W</code> again
             and the server stops.
           </p>
           <div class="tags" style="margin-top:22px;margin-bottom:0">
@@ -961,7 +961,7 @@
  '│                                                      ││  Welcome to nib          │',
  '│                                                      ││                          │',
  '<span class="tb">╰──────────────────────────────────────────────────────╯╰──────────────────────────╯</span>',
- '<span class="th"> j/k note  ↑/↓ scroll  ↵ edit  n new  / search  R source  o link  d trash  w web  ? help  q quit</span>'
+ '<span class="th"> w/s note  j/k scroll  ↵ edit  n new  / search  R source  o link  d trash  W web  ? help  q quit</span>'
   ];
   var screen = document.getElementById('screen');
   if (screen) {

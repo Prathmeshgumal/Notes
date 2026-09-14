@@ -81,11 +81,11 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "esc", "q", "T":
 			m.mode = modeList
 			return m, m.reload()
-		case "j", "down":
+		case "s", "down":
 			if m.trashCursor < len(m.trash)-1 {
 				m.trashCursor++
 			}
-		case "k", "up":
+		case "w", "up":
 			if m.trashCursor > 0 {
 				m.trashCursor--
 			}
@@ -297,9 +297,9 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "q":
 		return m, tea.Quit
-	case "j":
+	case "s":
 		m.moveCursor(1)
-	case "k":
+	case "w":
 		m.moveCursor(-1)
 	case "g":
 		m.cursor = 0
@@ -308,12 +308,16 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.cursor = max(0, len(m.notes)-1)
 		m.renderPreview()
 
-	// The preview scrolls; the list does not. A terminal turns the mouse wheel
-	// into arrow keys in the alternate screen, so binding the arrows here is
-	// what makes the wheel scroll the note instead of jumping between notes.
+	// The arrows move between notes alongside w/s. A terminal turns the mouse
+	// wheel into arrow keys in the alternate screen, so the wheel moves between
+	// notes too; j/k scroll the note itself.
 	case "down":
-		m.preview.LineDown(1)
+		m.moveCursor(1)
 	case "up":
+		m.moveCursor(-1)
+	case "j":
+		m.preview.LineDown(1)
+	case "k":
 		m.preview.LineUp(1)
 	case "pgdown", " ":
 		m.preview.ViewDown()
@@ -355,7 +359,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	case "o":
 		return m, m.openLink()
-	case "w":
+	case "W":
 		return m, m.toggleWeb()
 	case "u":
 		return m, m.undo()

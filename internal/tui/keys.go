@@ -27,11 +27,11 @@ func (m model) helpLine() string {
 	case modeRaw:
 		return "select with the mouse, then ctrl+shift+c   ↑/↓ scroll   esc back"
 	case modeTrash:
-		return "j/k move   ↵ restore   d delete for good   E empty trash   esc back"
+		return "w/s move   ↵ restore   d delete for good   E empty trash   esc back"
 	case modeHelp:
 		return "↑/↓ scroll   esc close"
 	default:
-		return "j/k note  ↑/↓ scroll  ↵ edit  n new  / search  R source  o link  d trash  w web  ? help  q quit"
+		return "w/s note  j/k scroll  ↵ edit  n new  / search  R source  o link  d trash  W web  ? help  q quit"
 	}
 }
 
@@ -39,13 +39,16 @@ const helpText = `
   nib — keys
 
   Choosing a note
-    j            next note
-    k            previous note
+    s / ↓        next note
+    w / ↑        previous note
     g / G        first / last note
     /            search, esc to clear
 
+                 the mouse wheel arrives as the arrow keys, so it moves
+                 between notes as well
+
   Reading a long note
-    ↑ / ↓        scroll a line — the mouse wheel sends these too
+    j / k        scroll a line, down / up
     space / b    scroll a page          pgup / pgdn  the same
     ctrl+d / u   scroll half a page
     home / end   jump to the top / bottom
@@ -104,7 +107,7 @@ const helpText = `
     u            undo the last delete (again for the one before it)
     T            the trash — restore anything deleted in the last 30 days
                  in it: ↵ restore, d delete for good, E empty it
-    w            start the web UI and open a browser
+    W            start the web UI and open a browser
     r            reload from disk
     ?            this help
     q / ctrl+c   quit

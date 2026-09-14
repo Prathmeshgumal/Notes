@@ -140,13 +140,13 @@ func TestNavigationClampsToBounds(t *testing.T) {
 	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
 	m = press(m, reloadedMsg{notes: mustList(t, st)})
 
-	up := press(m, key('k')) // already at the top
+	up := press(m, key('w')) // already at the top
 	if up.cursor != 0 {
 		t.Errorf("cursor went above the first note: %d", up.cursor)
 	}
 	down := m
 	for i := 0; i < 10; i++ {
-		down = press(down, key('j'))
+		down = press(down, key('s'))
 	}
 	if down.cursor != 2 {
 		t.Errorf("cursor = %d, want it clamped to 2", down.cursor)
@@ -245,7 +245,7 @@ func TestSelectionFollowsNoteAcrossReorder(t *testing.T) {
 
 	// Select the oldest note, which sits last.
 	for m.selected() != nil && m.selected().ID != older.ID {
-		m = press(m, key('j'))
+		m = press(m, key('s'))
 	}
 	if m.selected() == nil || m.selected().ID != older.ID {
 		t.Fatal("could not select the target note")
@@ -755,4 +755,56 @@ func TestLineFormattingKeepsTheEditorWhereItIs(t *testing.T) {
 func lastLine(s string) string {
 	parts := strings.Split(strings.TrimRight(s, "\n"), "\n")
 	return parts[len(parts)-1]
+}
+
+// The arrow keys move between notes, and w/s do the same. j/k are left to
+// scroll the note being read. A terminal delivers the mouse wheel as the arrow
+// keys, so this is also what the wheel does.
+func TestNoteKeysMoveAndScroll(t *testing.T) {
+	m, st := newTestModel(t)
+	for _, title := range []string{"a", "b", "c"} {
+		if _, err := st.Create(title, title); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	for _, tc := range []struct {
+		msg  tea.Msg
+		want int
+		why  string
+	}{
+		{key('s'), 1, "s moves to the next note"},
+		{key('s'), 2, "s again"},
+		{key('w'), 1, "w moves back"},
+		{tea.KeyMsg{Type: tea.KeyDown}, 2, "down arrow moves to the next note"},
+		{tea.KeyMsg{Type: tea.KeyUp}, 1, "up arrow moves back"},
+		{key('j'), 1, "j scrolls, it does not move"},
+		{key('k'), 1, "k scrolls, it does not move"},
+	} {
+		m = press(m, tc.msg)
+		if m.cursor != tc.want {
+			t.Errorf("%s: cursor = %d, want %d", tc.why, m.cursor, tc.want)
+		}
+	}
+}
+
+// w now means "previous note", so the web UI moved to W. A lowercase w must
+// never start a server.
+func TestLowercaseWDoesNotStartTheWebUI(t *testing.T) {
+	m, st := newTestModel(t)
+	if _, err := st.Create("a", "a"); err != nil {
+		t.Fatal(err)
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = press(m, reloadedMsg{notes: mustList(t, st)})
+
+	next, cmd := m.Update(key('w'))
+	if cmd != nil {
+		t.Error("w returned a command; it should only move the cursor")
+	}
+	if next.(model).server != nil {
+		t.Error("w started the web server")
+	}
 }
