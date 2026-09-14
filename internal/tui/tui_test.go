@@ -757,9 +757,9 @@ func lastLine(s string) string {
 	return parts[len(parts)-1]
 }
 
-// The arrow keys move between notes, and w/s do the same. j/k are left to
-// scroll the note being read. A terminal delivers the mouse wheel as the arrow
-// keys, so this is also what the wheel does.
+// w/s move between notes and j/k scroll the one being read, whatever the
+// mouse has been doing. The arrows and the wheel are the context-sensitive
+// pair — see TestArrowsFollowTheFocus.
 func TestNoteKeysMoveAndScroll(t *testing.T) {
 	m, st := newTestModel(t)
 	for _, title := range []string{"a", "b", "c"} {
@@ -778,8 +778,6 @@ func TestNoteKeysMoveAndScroll(t *testing.T) {
 		{key('s'), 1, "s moves to the next note"},
 		{key('s'), 2, "s again"},
 		{key('w'), 1, "w moves back"},
-		{tea.KeyMsg{Type: tea.KeyDown}, 2, "down arrow moves to the next note"},
-		{tea.KeyMsg{Type: tea.KeyUp}, 1, "up arrow moves back"},
 		{key('j'), 1, "j scrolls, it does not move"},
 		{key('k'), 1, "k scrolls, it does not move"},
 	} {
@@ -806,5 +804,171 @@ func TestLowercaseWDoesNotStartTheWebUI(t *testing.T) {
 	}
 	if next.(model).server != nil {
 		t.Error("w started the web server")
+	}
+}
+
+// click builds the message Bubble Tea delivers for a left-button press.
+func click(x, y int) tea.MouseMsg {
+	return tea.MouseMsg{X: x, Y: y, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
+}
+
+func wheel(up bool) tea.MouseMsg {
+	b := tea.MouseButtonWheelDown
+	if up {
+		b = tea.MouseButtonWheelUp
+	}
+	return tea.MouseMsg{Action: tea.MouseActionPress, Button: b}
+}
+
+func longNotesModel(t *testing.T, titles ...string) model {
+	t.Helper()
+	m, st := newTestModel(t)
+	for _, title := range titles {
+		if _, err := st.Create(title, strings.Repeat(title+"\n", 200)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	return press(m, reloadedMsg{notes: mustList(t, st)})
+}
+
+// Clicking a pane aims the arrows and the wheel at it.
+func TestClickFocusesAPane(t *testing.T) {
+	m := longNotesModel(t, "one", "two", "three")
+	g := m.geometry()
+
+	// The note being read starts focused, so the wheel scrolls it.
+	if m.focus != paneDoc {
+		t.Fatalf("focus starts at %v, want the document", m.focus)
+	}
+	m = press(m, wheel(false))
+	if m.preview.YOffset != 1 {
+		t.Errorf("wheel over the document scrolled %d lines, want 1", m.preview.YOffset)
+	}
+	if m.cursor != 0 {
+		t.Errorf("wheel over the document changed the note to %d", m.cursor)
+	}
+
+	// Click the list, and the same wheel turn moves between notes instead.
+	m = press(m, click(g.asideX+2, g.listY))
+	if m.focus != paneList {
+		t.Fatal("clicking the list did not focus it")
+	}
+	before := m.preview.YOffset
+	m = press(m, wheel(false))
+	if m.cursor != 1 {
+		t.Errorf("wheel over the list moved to %d, want 1", m.cursor)
+	}
+	m = press(m, wheel(true))
+	if m.cursor != 0 {
+		t.Errorf("wheel back moved to %d, want 0", m.cursor)
+	}
+	_ = before
+
+	// Click back on the note, and it scrolls again.
+	m = press(m, click(1, 3))
+	if m.focus != paneDoc {
+		t.Fatal("clicking the note did not focus it")
+	}
+	at := m.preview.YOffset
+	m = press(m, wheel(false))
+	if m.preview.YOffset != at+1 {
+		t.Errorf("wheel over the document scrolled to %d, want %d", m.preview.YOffset, at+1)
+	}
+}
+
+// The arrows follow the focus, exactly as the wheel does.
+func TestArrowsFollowTheFocus(t *testing.T) {
+	m := longNotesModel(t, "one", "two", "three")
+	g := m.geometry()
+
+	m = press(m, tea.KeyMsg{Type: tea.KeyDown})
+	if m.preview.YOffset != 1 || m.cursor != 0 {
+		t.Errorf("with the document focused, down gave offset %d cursor %d, want 1 and 0",
+			m.preview.YOffset, m.cursor)
+	}
+
+	m = press(m, click(g.asideX+2, g.listY))
+	m = press(m, tea.KeyMsg{Type: tea.KeyDown})
+	if m.cursor != 1 {
+		t.Errorf("with the list focused, down gave cursor %d, want 1", m.cursor)
+	}
+}
+
+// Whatever the mouse has been doing, these four keys mean one thing each.
+func TestWSAndJKIgnoreTheFocus(t *testing.T) {
+	for _, where := range []string{"document", "list"} {
+		m := longNotesModel(t, "one", "two", "three")
+		g := m.geometry()
+		if where == "list" {
+			m = press(m, click(g.asideX+2, g.listY))
+		} else {
+			m = press(m, click(1, 3))
+		}
+
+		m = press(m, key('s'))
+		if m.cursor != 1 {
+			t.Errorf("focus on the %s: s gave cursor %d, want 1", where, m.cursor)
+		}
+		m = press(m, key('w'))
+		if m.cursor != 0 {
+			t.Errorf("focus on the %s: w gave cursor %d, want 0", where, m.cursor)
+		}
+
+		m = press(m, key('j'))
+		if m.preview.YOffset != 1 {
+			t.Errorf("focus on the %s: j scrolled %d, want 1", where, m.preview.YOffset)
+		}
+		if m.cursor != 0 {
+			t.Errorf("focus on the %s: j changed the note to %d", where, m.cursor)
+		}
+	}
+}
+
+// Clicking a title opens that note.
+func TestClickingATitleSelectsIt(t *testing.T) {
+	m := longNotesModel(t, "one", "two", "three")
+	g := m.geometry()
+
+	m = press(m, click(g.asideX+3, g.itemsY+2))
+	if m.cursor != 2 {
+		t.Errorf("clicking the third title selected %d, want 2", m.cursor)
+	}
+	// Below the last title there is nothing to select.
+	before := m.cursor
+	m = press(m, click(g.asideX+3, g.itemsY+40))
+	if m.cursor != before {
+		t.Errorf("clicking past the end moved the cursor to %d", m.cursor)
+	}
+}
+
+// The source view exists to be selected with the mouse, so the app gives the
+// mouse back while it is open and takes it again on the way out.
+func TestSourceViewReleasesTheMouse(t *testing.T) {
+	m := longNotesModel(t, "one")
+
+	next, cmd := m.Update(key('R'))
+	m = next.(model)
+	if m.mode != modeRaw {
+		t.Fatalf("R did not open the source view, mode = %v", m.mode)
+	}
+	if cmd == nil {
+		t.Fatal("R returned no command; it should release the mouse")
+	}
+	// The message types are unexported, so compare against what the command
+	// itself produces.
+	if cmd() != tea.DisableMouse() {
+		t.Errorf("R returned %T, want a mouse release", cmd())
+	}
+
+	next, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	if next.(model).mode != modeList {
+		t.Fatal("esc did not leave the source view")
+	}
+	if cmd == nil {
+		t.Fatal("leaving the source view returned no command; the mouse stays gone")
+	}
+	if cmd() != tea.EnableMouseCellMotion() {
+		t.Errorf("leaving returned %T, want the mouse taken back", cmd())
 	}
 }

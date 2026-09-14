@@ -164,8 +164,8 @@ at that position.
 
 | Key | Does |
 | --- | --- |
-| `s` / `↓` | Next note |
-| `w` / `↑` | Previous note |
+| `s` | Next note |
+| `w` | Previous note |
 | `g` / `G` | Jump to the first / last note |
 | `r` | Reload from disk (picks up changes made in the web UI) |
 | `?` | Full help — any key closes it |
@@ -182,9 +182,19 @@ The note pane scrolls, and shows a scrollbar when there is more than fits.
 | `ctrl+d` / `ctrl+u` | Scroll half a page |
 | `home` / `end` | Jump to the top / bottom |
 
-**The mouse wheel moves between notes.** A terminal turns the wheel into arrow keys,
-and the arrows move between notes — so the wheel does too. Use `j` and `k` to scroll the
-note you are reading.
+### The arrows and the wheel follow your last click
+
+Click a pane to aim at it. Click the note and `↑`/`↓` and the wheel scroll it; click the
+list and they move between notes instead. The pane you aimed at wears the bright border,
+so there is always something on screen saying which it is. Clicking a title opens it.
+
+`w`/`s` and `j`/`k` ignore all of this — they always mean "another note" and "scroll this
+one". Whatever the mouse has been doing, those four keys do one thing each.
+
+**The cost of holding the mouse.** For the app to know where you clicked, the terminal
+has to hand it the mouse, which means **selecting text needs `shift` held down** while
+you drag. The one place it does not is `R`, the source view, where the app gives the
+mouse back precisely so that copying is unencumbered.
 
 ### Copying a note
 
@@ -201,8 +211,12 @@ You choose what to copy, which a key that copies the whole note cannot do, and i
 everywhere because it is your terminal doing the copying rather than the app asking for a
 clipboard it may not be able to reach.
 
-The app never captures the mouse, so selection always belongs to your terminal. The
-reason `R` exists at all is that the normal view draws borders around the text, and a
+**`R` is also where the app gives the mouse back.** Everywhere else it holds the mouse so
+it can tell which pane you clicked, and selecting text there means holding `shift` while
+you drag. In this view there is nothing to click and everything to copy, so the mouse
+returns to your terminal and no modifier is needed.
+
+The other reason `R` exists is that the normal view draws borders around the text, and a
 selection there would carry those along with it.
 
 ### Writing
@@ -304,13 +318,13 @@ Search matches both titles and note bodies, and ignores case.
 Write links as `[some text](https://example.com)`. The preview shows only *some text* —
 the URL stays hidden, like it would in a browser.
 
-**Ctrl+click the text to open it.** The preview emits real terminal hyperlinks (OSC 8),
-so the link text is clickable in GNOME Terminal, iTerm2, kitty, WezTerm, Windows Terminal
-and most other modern terminals.
-
-`o` does the same thing from the keyboard, and is the fallback in a terminal that doesn't
-support hyperlinks. If the note has several links, press `o` again for the next one; the
+**Press `o` to open one.** If the note has several, press `o` again for the next; the
 status line names the one it opened.
+
+The preview does emit real terminal hyperlinks (OSC 8), so the link text is genuinely
+clickable in GNOME Terminal, iTerm2, kitty, WezTerm and Windows Terminal. But while the
+app is holding the mouse for click-to-focus, most terminals deliver that click to the app
+instead of opening the link — which is why `o` is the route to rely on.
 
 URLs written out in full are clickable as well — they have no text to hide behind, so
 they stay visible. Link syntax inside a code block stays literal.

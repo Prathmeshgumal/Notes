@@ -27,6 +27,15 @@ import (
 // The list sits in a box in the top-right corner, so the note itself gets the
 // rest of the screen. Narrower than the old full-height sidebar, which is where
 // the extra room for the note comes from.
+// Which pane the arrows and the mouse wheel act on. Clicking a pane focuses
+// it; w/s and j/k ignore this and always do the one thing they say.
+type pane int
+
+const (
+	paneDoc pane = iota // the note being read
+	paneList
+)
+
 const (
 	asideWidth = 26
 	// What is known about the note is a fixed three lines, so it takes a small
@@ -40,6 +49,7 @@ type model struct {
 
 	cursor int
 	mode   mode
+	focus  pane
 	width  int
 	height int
 

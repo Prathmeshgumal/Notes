@@ -39,13 +39,10 @@ const helpText = `
   nib — keys
 
   Choosing a note
-    s / ↓        next note
-    w / ↑        previous note
+    s            next note
+    w            previous note
     g / G        first / last note
     /            search, esc to clear
-
-                 the mouse wheel arrives as the arrow keys, so it moves
-                 between notes as well
 
   Reading a long note
     j / k        scroll a line, down / up
@@ -53,10 +50,25 @@ const helpText = `
     ctrl+d / u   scroll half a page
     home / end   jump to the top / bottom
 
+  The arrows and the wheel follow the mouse
+    click        a pane to aim at it — the note, or the list. Whichever you
+                 clicked last is the one ↑/↓ and the wheel act on, and it is
+                 the pane wearing the bright border
+    click        a title in the list to open it
+
+                 w/s and j/k ignore all this. They always mean "another note"
+                 and "scroll this one", so there is always a key whose effect
+                 does not depend on where the mouse has been.
+
+                 Selecting text needs shift held down while you drag, because
+                 the app is holding the mouse. R gives the mouse back — see
+                 Copying, below.
+
   Copying
-    R            the Markdown source, full-screen and borderless. Select it
-                 with the mouse and copy the way you always do — ctrl+shift+c
-                 in most Linux terminals, cmd+c on a Mac.
+    R            the Markdown source, full-screen and borderless. The app
+                 releases the mouse here, so select it and copy the way you
+                 always do, with no modifier — ctrl+shift+c in most Linux
+                 terminals, cmd+c on a Mac.
 
   Writing
     n            new note
@@ -101,8 +113,10 @@ const helpText = `
     so a digit never reaches a program running inside one.
 
   Other
-    o            open a link from this note (again for the next one)
-                 ctrl+click the link text works too
+    o            open a link from this note (again for the next one).
+                 The links are real terminal hyperlinks, but while the app is
+                 holding the mouse most terminals send the click here instead
+                 of opening it, so o is the dependable route
     d            move to trash (asks first)
     u            undo the last delete (again for the one before it)
     T            the trash — restore anything deleted in the last 30 days

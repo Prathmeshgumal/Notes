@@ -65,7 +65,7 @@ func main() {
 		return
 	}
 
-	if _, err := tea.NewProgram(tui.New(st), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(tui.New(st), tea.WithAltScreen(), tea.WithMouseCellMotion()).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}

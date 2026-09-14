@@ -62,10 +62,66 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.body.SetValue(string(msg))
 		return m, nil
 
+	case tea.MouseMsg:
+		return m.handleMouse(msg)
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
 	return m, nil
+}
+
+// handleMouse routes a click or a wheel turn.
+//
+// Clicking a pane focuses it, and the arrows and the wheel then act on
+// whichever pane that is. The wheel arrives as a mouse event only because the
+// app asks the terminal for mouse reporting; without that a terminal sends the
+// wheel as bare arrow keys, which is why those two paths agree on what to do.
+func (m model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
+	// Only the note list view is divided into panes. Everywhere else — the
+	// editor, the trash, the help, the bare source view — the mouse has
+	// nothing to aim at.
+	if m.mode != modeList && m.mode != modeSearch {
+		return m, nil
+	}
+
+	switch msg.Action {
+	case tea.MouseActionPress:
+		switch msg.Button {
+		case tea.MouseButtonLeft:
+			if msg.X >= m.geometry().asideX {
+				m.focus = paneList
+				// Landing on a title selects it, the way clicking a row does
+				// anywhere else.
+				if i := m.noteAt(msg.X, msg.Y); i >= 0 && i != m.cursor {
+					m.cursor = i
+					m.linkCursor = 0
+					m.renderPreview()
+				}
+			} else {
+				m.focus = paneDoc
+			}
+		case tea.MouseButtonWheelDown:
+			m.scrollBy(1)
+		case tea.MouseButtonWheelUp:
+			m.scrollBy(-1)
+		}
+	}
+	return m, nil
+}
+
+// scrollBy moves the focused pane one step: through the notes, or down the
+// note being read.
+func (m *model) scrollBy(delta int) {
+	if m.focus == paneList {
+		m.moveCursor(delta)
+		return
+	}
+	if delta > 0 {
+		m.preview.LineDown(delta)
+	} else {
+		m.preview.LineUp(-delta)
+	}
 }
 
 func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -111,6 +167,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "esc", "q", "R":
 			m.mode = modeList
+			return m, tea.EnableMouseCellMotion
 		case "down", "j":
 			m.rawView.LineDown(1)
 		case "up", "k":
@@ -308,13 +365,13 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.cursor = max(0, len(m.notes)-1)
 		m.renderPreview()
 
-	// The arrows move between notes alongside w/s. A terminal turns the mouse
-	// wheel into arrow keys in the alternate screen, so the wheel moves between
-	// notes too; j/k scroll the note itself.
+	// The arrows act on whichever pane was last clicked. w/s and j/k do not:
+	// they always mean "another note" and "scroll this one", so there is
+	// always a key whose effect does not depend on where the mouse has been.
 	case "down":
-		m.moveCursor(1)
+		m.scrollBy(1)
 	case "up":
-		m.moveCursor(-1)
+		m.scrollBy(-1)
 	case "j":
 		m.preview.LineDown(1)
 	case "k":
@@ -337,6 +394,10 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.mode = modeRaw
 			m.rawView.SetContent(n.Content)
 			m.rawView.GotoTop()
+			// Hand the mouse back to the terminal. This view exists to be
+			// selected and copied, and an app holding the mouse would make
+			// that need a modifier held down.
+			return m, tea.DisableMouse
 		}
 	case "enter":
 		if n := m.selected(); n != nil {
