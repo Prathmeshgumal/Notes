@@ -1,5 +1,7 @@
 # site
 
+Live at **<https://nib-note.vercel.app>**.
+
 The landing page. One static HTML file with no build step — the fonts come from
 Google Fonts and GSAP from a CDN, so there is nothing to compile and nothing to
 install.
@@ -22,6 +24,14 @@ npx vercel --cwd site --prod    # the real thing
 The first run asks you to sign in and to confirm the project name; everything
 after that is one command. Vercel serves the directory as-is — there is no
 framework to detect and no build command to set.
+
+`og.png` is the link-preview card. Social platforms do not render SVG, so it is
+a PNG, generated from `docs/og-card.html`:
+
+```bash
+google-chrome --headless --disable-gpu \
+  --window-size=1200,630 --screenshot=site/og.png docs/og-card.html
+```
 
 ## Editing it
 
