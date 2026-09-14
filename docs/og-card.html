@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1200px; height:630px; }
+  body {
+    background:#efeeec; color:#1e1e1e;
+    display:flex; flex-direction:column;
+    padding:46px 60px 0;
+    font-family:'IBM Plex Mono',monospace;
+    overflow:hidden;
+  }
+  .top { display:flex; align-items:baseline; gap:20px; }
+  .mark { font-family:'Silkscreen',monospace; font-weight:700; font-size:62px; letter-spacing:-1px; }
+  .tag  { font-size:19px; color:#4a4a48; letter-spacing:-0.2px; }
+  .shot { margin-top:32px; width:952px; align-self:center;
+          box-shadow:0 18px 44px rgba(0,0,0,.17); border-radius:7px; overflow:hidden; display:block; }
+  .shot img { width:100%; display:block; }
+</style></head>
+<body>
+  <div class="top">
+    <div class="mark">nib</div>
+    <div class="tag">Markdown notes that never leave your machine</div>
+  </div>
+  <div class="shot"><img src="screenshot.svg"></div>
+</body></html>

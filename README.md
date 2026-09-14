@@ -12,6 +12,9 @@ nothing running in the background.
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)](#platforms)
 [![Release](https://img.shields.io/github/v/release/Prathmeshgumal/nib?color=success)](https://github.com/Prathmeshgumal/nib/releases/latest)
+[![Website](https://img.shields.io/badge/website-nib--note.vercel.app-14c47d)](https://nib-note.vercel.app)
+
+**[nib-note.vercel.app](https://nib-note.vercel.app)**
 
 </div>
 
@@ -291,8 +294,9 @@ the same script you would.
 
 ## The site
 
-The landing page lives in [`site/`](./site) — one static HTML file, no build
-step. Look at it with `python3 -m http.server -d site 8000`, publish it with
+**[nib-note.vercel.app](https://nib-note.vercel.app)** — the source is in
+[`site/`](./site), one static HTML file with no build step. Look at it locally
+with `python3 -m http.server -d site 8000`, publish it with
 `npx vercel --cwd site --prod`.
 
 ## Contributing
