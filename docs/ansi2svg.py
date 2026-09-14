@@ -5,7 +5,7 @@ they would on screen, then each run of same-coloured cells becomes one <tspan>.
 """
 import re, sys, html
 
-COLS, ROWS = 92, 18
+COLS, ROWS = 108, 18
 
 # xterm-256 palette
 def xterm256(n):
@@ -66,9 +66,17 @@ def replay(data):
                     p = [int(x) for x in params.split(';') if x] or [1,1]
                     s.y = (p[0] if len(p)>0 else 1)-1
                     s.x = (p[1] if len(p)>1 else 1)-1
-                elif cmd == 'J' and params in ('2','3'):
-                    s.grid = [[(' ',None,False) for _ in range(COLS)] for _ in range(ROWS)]
-                    s.x = s.y = 0
+                elif cmd == 'J':
+                    if params in ('2', '3'):
+                        s.grid = [[(' ',None,False) for _ in range(COLS)] for _ in range(ROWS)]
+                        s.x = s.y = 0
+                    elif params in ('', '0'):
+                        # erase from the cursor to the end of the screen, which
+                        # is how a shorter frame clears the taller one below it
+                        for xx in range(s.x, COLS):
+                            if 0 <= s.y < ROWS: s.grid[s.y][xx] = (' ', None, False)
+                        for yy in range(s.y + 1, ROWS):
+                            s.grid[yy] = [(' ', None, False) for _ in range(COLS)]
                 elif cmd == 'K':
                     for xx in range(s.x, COLS): s.grid[s.y][xx] = (' ',None,False)
                 elif cmd == 'A': s.y -= int(params or 1)

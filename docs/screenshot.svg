@@ -1,86 +1,91 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="818" height="394" viewBox="0 0 818 394" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,&quot;DejaVu Sans Mono&quot;,monospace" font-size="13">
-<rect width="818" height="394" rx="10" fill="#17101a"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="886" height="413" viewBox="0 0 886 413" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,&quot;DejaVu Sans Mono&quot;,monospace" font-size="13">
+<rect width="886" height="413" rx="10" fill="#17101a"/>
 <circle cx="26" cy="19" r="5.5" fill="#ff5f57"/>
 <circle cx="45" cy="19" r="5.5" fill="#febc2e"/>
 <circle cx="64" cy="19" r="5.5" fill="#28c840"/>
-<text x="409" y="23" fill="#7d6f84" font-size="12" text-anchor="middle">note</text>
-<text x="18.0" y="66" fill="#8b939e" xml:space="preserve">╭──────────────────────────────╮</text>
-<text x="290.0" y="66" fill="#4493f8" xml:space="preserve">╭──────────────────────────────────────────────────────────╮</text>
-<text x="18.0" y="85" fill="#8b939e" xml:space="preserve">│</text>
-<text x="26.5" y="85" fill="#4493f8" font-weight="600" xml:space="preserve">Notes (5)</text>
-<text x="281.5" y="85" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="85" fill="#4493f8" xml:space="preserve">│</text>
-<text x="298.5" y="85" fill="#4493f8" font-weight="600" xml:space="preserve">Meeting notes — 14 Sep</text>
-<text x="791.5" y="85" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="104" fill="#8b939e" xml:space="preserve">│</text>
-<text x="281.5" y="104" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="104" fill="#4493f8" xml:space="preserve">│</text>
-<text x="791.5" y="104" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="123" fill="#8b939e" xml:space="preserve">│</text>
-<text x="26.5" y="123" fill="#4493f8" xml:space="preserve">▸</text>
-<text x="43.5" y="123" fill="#4493f8" font-weight="600" xml:space="preserve">Meeting notes — 14 Sep</text>
-<text x="281.5" y="123" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="123" fill="#4493f8" xml:space="preserve">│</text>
-<text x="791.5" y="123" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="142" fill="#8b939e" xml:space="preserve">│</text>
-<text x="26.5" y="142" fill="#cfc2d4" xml:space="preserve">  Shipping checklist</text>
-<text x="281.5" y="142" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="142" fill="#4493f8" xml:space="preserve">│</text>
-<text x="315.5" y="142" fill="#d0d0d0" xml:space="preserve">• [</text>
-<text x="341.0" y="142" fill="#00cd00" font-weight="600" xml:space="preserve">✓</text>
-<text x="349.5" y="142" fill="#cfc2d4" xml:space="preserve">]</text>
-<text x="366.5" y="142" fill="#d0d0d0" xml:space="preserve">Agree the release date</text>
-<text x="791.5" y="142" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="161" fill="#8b939e" xml:space="preserve">│</text>
-<text x="26.5" y="161" fill="#cfc2d4" xml:space="preserve">  Reading list</text>
-<text x="281.5" y="161" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="161" fill="#4493f8" xml:space="preserve">│</text>
-<text x="315.5" y="161" fill="#d0d0d0" xml:space="preserve">• [</text>
-<text x="341.0" y="161" fill="#00cd00" font-weight="600" xml:space="preserve">✓</text>
-<text x="349.5" y="161" fill="#cfc2d4" xml:space="preserve">]</text>
-<text x="366.5" y="161" fill="#d0d0d0" xml:space="preserve">Write the migration plan</text>
-<text x="791.5" y="161" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="180" fill="#8b939e" xml:space="preserve">│</text>
-<text x="26.5" y="180" fill="#cfc2d4" xml:space="preserve">  Ideas</text>
-<text x="281.5" y="180" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="180" fill="#4493f8" xml:space="preserve">│</text>
-<text x="315.5" y="180" fill="#d0d0d0" xml:space="preserve">• [ ] Draft the rollback steps</text>
-<text x="791.5" y="180" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="199" fill="#8b939e" xml:space="preserve">│</text>
-<text x="26.5" y="199" fill="#cfc2d4" xml:space="preserve">  Welcome to note</text>
-<text x="281.5" y="199" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="199" fill="#4493f8" xml:space="preserve">│</text>
-<text x="315.5" y="199" fill="#d0d0d0" xml:space="preserve">• [ ] Share with the team</text>
-<text x="791.5" y="199" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="218" fill="#8b939e" xml:space="preserve">│</text>
-<text x="281.5" y="218" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="218" fill="#4493f8" xml:space="preserve">│</text>
-<text x="791.5" y="218" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="237" fill="#8b939e" xml:space="preserve">│</text>
-<text x="281.5" y="237" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="237" fill="#4493f8" xml:space="preserve">│</text>
-<text x="315.5" y="237" fill="#d0d0d0" xml:space="preserve">│ Ship on Thursday if CI is green.</text>
-<text x="791.5" y="237" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="256" fill="#8b939e" xml:space="preserve">│</text>
-<text x="281.5" y="256" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="256" fill="#4493f8" xml:space="preserve">│</text>
-<text x="791.5" y="256" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="275" fill="#8b939e" xml:space="preserve">│</text>
-<text x="281.5" y="275" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="275" fill="#4493f8" xml:space="preserve">│</text>
-<text x="315.5" y="275" fill="#d0d0d0" xml:space="preserve">Context is in</text>
-<text x="434.5" y="275" fill="#00af5f" font-weight="600" xml:space="preserve">the wiki</text>
-<text x="502.5" y="275" fill="#d0d0d0" xml:space="preserve">.</text>
-<text x="791.5" y="275" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="294" fill="#8b939e" xml:space="preserve">│</text>
-<text x="281.5" y="294" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="294" fill="#4493f8" xml:space="preserve">│</text>
-<text x="791.5" y="294" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="313" fill="#8b939e" xml:space="preserve">│</text>
-<text x="281.5" y="313" fill="#8b939e" xml:space="preserve">│</text>
-<text x="290.0" y="313" fill="#4493f8" xml:space="preserve">│</text>
-<text x="791.5" y="313" fill="#4493f8" xml:space="preserve">│</text>
-<text x="18.0" y="332" fill="#8b939e" xml:space="preserve">╰──────────────────────────────╯</text>
-<text x="290.0" y="332" fill="#4493f8" xml:space="preserve">╰──────────────────────────────────────────────────────────╯</text>
-<text x="18.0" y="370" fill="#8b939e" xml:space="preserve"> j/k move  ↵ edit  n new  / search  o link  d trash  u undo  T trash  w web  ? help  q quit</text>
+<text x="443" y="23" fill="#7d6f84" font-size="12" text-anchor="middle">nib</text>
+<text x="18.0" y="66" fill="#4493f8" xml:space="preserve">╭──────────────────────────────────────────────────────────────────────╮</text>
+<text x="630.0" y="66" fill="#8b939e" xml:space="preserve">╭──────────────────────────╮</text>
+<text x="18.0" y="85" fill="#4493f8" xml:space="preserve">│</text>
+<text x="26.5" y="85" fill="#4493f8" font-weight="600" xml:space="preserve">Meeting notes — 14 Sep</text>
+<text x="621.5" y="85" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="85" fill="#8b939e" xml:space="preserve">│Edited</text>
+<text x="698.0" y="85" fill="#cfc2d4" xml:space="preserve"> just now</text>
+<text x="859.5" y="85" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="104" fill="#4493f8" xml:space="preserve">│</text>
+<text x="621.5" y="104" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="104" fill="#8b939e" xml:space="preserve">│Tasks</text>
+<text x="698.0" y="104" fill="#cfc2d4" xml:space="preserve"> 2 of 4 done</text>
+<text x="859.5" y="104" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="123" fill="#4493f8" xml:space="preserve">│</text>
+<text x="621.5" y="123" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="123" fill="#8b939e" xml:space="preserve">│Length</text>
+<text x="698.0" y="123" fill="#cfc2d4" xml:space="preserve"> 45 words</text>
+<text x="859.5" y="123" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="142" fill="#4493f8" xml:space="preserve">│</text>
+<text x="43.5" y="142" fill="#d0d0d0" xml:space="preserve">• [</text>
+<text x="69.0" y="142" fill="#00cd00" font-weight="600" xml:space="preserve">✓</text>
+<text x="77.5" y="142" fill="#cfc2d4" xml:space="preserve">]</text>
+<text x="94.5" y="142" fill="#d0d0d0" xml:space="preserve">Agree the release date</text>
+<text x="621.5" y="142" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="142" fill="#8b939e" xml:space="preserve">╰──────────────────────────╯</text>
+<text x="18.0" y="161" fill="#4493f8" xml:space="preserve">│</text>
+<text x="43.5" y="161" fill="#d0d0d0" xml:space="preserve">• [</text>
+<text x="69.0" y="161" fill="#00cd00" font-weight="600" xml:space="preserve">✓</text>
+<text x="77.5" y="161" fill="#cfc2d4" xml:space="preserve">]</text>
+<text x="94.5" y="161" fill="#d0d0d0" xml:space="preserve">Write the migration plan</text>
+<text x="621.5" y="161" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="161" fill="#8b939e" xml:space="preserve">╭──────────────────────────╮</text>
+<text x="18.0" y="180" fill="#4493f8" xml:space="preserve">│</text>
+<text x="43.5" y="180" fill="#d0d0d0" xml:space="preserve">• [ ] Draft the rollback steps</text>
+<text x="621.5" y="180" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="180" fill="#8b939e" xml:space="preserve">│</text>
+<text x="638.5" y="180" fill="#4493f8" font-weight="600" xml:space="preserve">Notes (5)</text>
+<text x="859.5" y="180" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="199" fill="#4493f8" xml:space="preserve">│</text>
+<text x="43.5" y="199" fill="#d0d0d0" xml:space="preserve">• [ ] Share with the team</text>
+<text x="621.5" y="199" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="199" fill="#8b939e" xml:space="preserve">│</text>
+<text x="638.5" y="199" fill="#4493f8" xml:space="preserve">▸</text>
+<text x="655.5" y="199" fill="#4493f8" font-weight="600" xml:space="preserve">Meeting notes — 14 S…</text>
+<text x="859.5" y="199" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="218" fill="#4493f8" xml:space="preserve">│</text>
+<text x="621.5" y="218" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="218" fill="#8b939e" xml:space="preserve">│</text>
+<text x="638.5" y="218" fill="#cfc2d4" xml:space="preserve">  Shipping checklist</text>
+<text x="859.5" y="218" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="237" fill="#4493f8" xml:space="preserve">│</text>
+<text x="43.5" y="237" fill="#d0d0d0" xml:space="preserve">│ Ship on Thursday if CI is green.</text>
+<text x="621.5" y="237" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="237" fill="#8b939e" xml:space="preserve">│</text>
+<text x="638.5" y="237" fill="#cfc2d4" xml:space="preserve">  Reading list</text>
+<text x="859.5" y="237" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="256" fill="#4493f8" xml:space="preserve">│</text>
+<text x="621.5" y="256" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="256" fill="#8b939e" xml:space="preserve">│</text>
+<text x="638.5" y="256" fill="#cfc2d4" xml:space="preserve">  Ideas</text>
+<text x="859.5" y="256" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="275" fill="#4493f8" xml:space="preserve">│</text>
+<text x="43.5" y="275" fill="#d0d0d0" xml:space="preserve">Context is in</text>
+<text x="162.5" y="275" fill="#00af5f" font-weight="600" xml:space="preserve">the wiki</text>
+<text x="230.5" y="275" fill="#d0d0d0" xml:space="preserve">.</text>
+<text x="621.5" y="275" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="275" fill="#8b939e" xml:space="preserve">│</text>
+<text x="638.5" y="275" fill="#cfc2d4" xml:space="preserve">  Welcome to nib</text>
+<text x="859.5" y="275" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="294" fill="#4493f8" xml:space="preserve">│</text>
+<text x="621.5" y="294" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="294" fill="#8b939e" xml:space="preserve">│</text>
+<text x="859.5" y="294" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="313" fill="#4493f8" xml:space="preserve">│</text>
+<text x="621.5" y="313" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="313" fill="#8b939e" xml:space="preserve">│</text>
+<text x="859.5" y="313" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="332" fill="#4493f8" xml:space="preserve">│</text>
+<text x="621.5" y="332" fill="#4493f8" xml:space="preserve">│</text>
+<text x="630.0" y="332" fill="#8b939e" xml:space="preserve">│</text>
+<text x="859.5" y="332" fill="#8b939e" xml:space="preserve">│</text>
+<text x="18.0" y="351" fill="#4493f8" xml:space="preserve">╰──────────────────────────────────────────────────────────────────────╯</text>
+<text x="630.0" y="351" fill="#8b939e" xml:space="preserve">╰──────────────────────────╯</text>
+<text x="18.0" y="389" fill="#8b939e" xml:space="preserve"> j/k note  ↑/↓ scroll  ↵ edit  n new  / search  R source  o link  d trash  w web  ? help  q quit</text>
 </svg>

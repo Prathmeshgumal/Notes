@@ -16,8 +16,12 @@ nothing running in the background.
 </div>
 
 <div align="center">
-  <img src="docs/screenshot.svg" alt="note running in a terminal: a list of notes on the left, the selected note rendered as Markdown on the right, with a keybinding bar along the bottom" width="820">
+  <img src="docs/screenshot.svg" width="880"
+       alt="nib in a terminal: the note fills the screen, with a small box of facts and the list of notes down the right-hand side">
 </div>
+
+The note gets the screen. The right-hand column carries three facts about what you are
+reading and the list of everything else.
 
 Press `w` and the same notes open in a browser with a formatting toolbar and live
 preview. Both stay open at once, backed by the same file.
@@ -183,7 +187,12 @@ code, headings, quotes, tables, and task lists with real checkboxes. Leave the t
 and the first line becomes it, the way Gists work.
 
 **Lists carry on by themselves.** Press `↵` at the end of a list item and the next one is
-waiting for you:
+waiting for you — here only the words were typed, never the `- [ ]`:
+
+<div align="center">
+  <img src="docs/screenshot-editing.svg" width="880"
+       alt="The nib editor: a task list where each new item's marker was inserted automatically on pressing Enter">
+</div>
 
 ```
 - [ ] buy milk     ↵ →  - [ ]        a new task, unticked
@@ -196,8 +205,9 @@ Indentation is kept, so a nested item stays nested. Press `↵` again on the emp
 drop the marker and finish the list, or `alt+↵` for a line break that leaves the list
 alone.
 
-**Keyboard first, lazygit style.** `j`/`k` to move, `↵` to edit, `n` for a new note, `/` to
-search, `?` for everything else. Formatting has keys too: bold, italic, strikethrough,
+**Keyboard first, lazygit style.** `j`/`k` to move between notes, `↑`/`↓` to scroll the one
+you are reading — so the mouse wheel does too. `↵` to edit, `n` for a new note, `/` to
+search, `?` for everything else. Formatting has keys as well: bold, italic, strikethrough,
 code, headings, three kinds of list, quotes and rules.
 
 **Copy what you need.** `R` shows the note's Markdown full-screen with no borders, so a
