@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nib — Markdown notes that never leave your machine</title>
+<meta name="description" content="A Markdown note taker that lives in your terminal and in your browser, from the same 19 MB binary. One SQLite file on your own disk. No account, no cloud, no telemetry.">
+<link rel="canonical" href="https://nib.sh/">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="nib — Markdown notes that never leave your machine">
+<meta property="og:description" content="A terminal note taker with a browser UI in the same 19 MB binary. Opens 1,000 notes in 19 ms. Local-first, MIT licensed.">
+<meta property="og:image" content="https://raw.githubusercontent.com/Prathmeshgumal/nib/main/docs/screenshot.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="nib — Markdown notes that never leave your machine">
+<meta name="twitter:description" content="A terminal note taker with a browser UI in the same 19 MB binary. Local-first, MIT licensed.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Prathmeshgumal/nib/main/docs/screenshot.svg">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%231e1e1e'/><text y='23' x='4' font-size='20' font-family='monospace' fill='%2314c47d'>$</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&family=Archivo:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --paper:  #efeeec;
+    --paper2: #f7f7f6;
+    --ink:    #1e1e1e;
+    --ink2:   #4a4a48;
+    --faint:  #8d8b87;
+    --rule:   #cbc8c5;
+    --lime:   #14c47d;
+    --blue:   #350aff;
+    --orange: #ff4c24;
+    --screen: #17101a;
+    --screen-ink: #cfc2d4;
+
+    --raster: "Silkscreen", "Courier New", monospace;
+    --mono:   "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans:   "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .wrap { max-width: 1400px; margin: 0 auto; padding-inline: clamp(14px, 3vw, 38px); }
+
+  /* ── marquee ─────────────────────────────────────────── */
+  .strip {
+    background: var(--ink); color: var(--paper);
+    overflow: hidden; white-space: nowrap; padding-block: 7px;
+    font-family: var(--raster); font-size: 11px; letter-spacing: .05em;
+  }
+  .strip ul { display: inline-flex; margin: 0; padding: 0; list-style: none; animation: slide 30s linear infinite; }
+  .strip li { display: inline-flex; gap: 26px; padding-right: 26px; }
+  .strip .g { color: var(--lime); }
+  @keyframes slide { to { transform: translateX(-50%); } }
+
+  /* ── nav ─────────────────────────────────────────────── */
+  nav { position: fixed; inset: 0 0 auto; z-index: 90; background: var(--paper); border-bottom: 1px solid var(--ink); }
+  .navrow { max-width: 1400px; margin: 0 auto; padding: 10px clamp(14px,3vw,38px); display: flex; align-items: center; gap: 10px; }
+  .mark { font-family: var(--raster); font-size: 16px; color: var(--ink); text-decoration: none; }
+  .mark i { color: var(--lime); font-style: normal; }
+  .navrow .fill { flex: 1; }
+  .navlinks { display: none; gap: 20px; }
+  @media (min-width: 900px) { .navlinks { display: flex; } }
+  .navlinks a { font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink2); text-decoration: none; }
+  .navlinks a:hover { color: var(--lime); }
+  .go {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+    background: var(--ink); color: var(--paper); padding: 9px 15px;
+    border: 1px solid var(--ink); transition: background .15s, color .15s;
+  }
+  .go:hover { background: var(--lime); border-color: var(--lime); color: var(--ink); }
+  .go.ghost { background: none; color: var(--ink); }
+  .go.ghost:hover { background: var(--ink); color: var(--paper); }
+
+  /* View on GitHub, with the live count in its own cell */
+  .gh {
+    display: none; align-items: stretch;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+    letter-spacing: .05em; text-decoration: none;
+    border: 1px solid var(--ink); color: var(--ink);
+    background: var(--paper2); transition: background .15s;
+  }
+  @media (min-width: 620px) { .gh { display: inline-flex; } }
+  .gh .mkgh { padding: 9px 13px; white-space: nowrap; }
+  .gh .n { padding: 9px 12px; border-left: 1px solid var(--ink); background: var(--paper); font-variant-numeric: tabular-nums; }
+  .gh:hover, .gh:hover .n { background: var(--lime); }
+
+  /* ── swipe reveal: the site's repeated device ─────────── */
+  .sr { position: relative; display: block; overflow: hidden; }
+  .sr > .sr-in { display: block; }
+  .sr > .sr-bar {
+    position: absolute; inset: 0;
+    background: var(--ink);
+    transform: scaleX(0); transform-origin: left center;
+    pointer-events: none;
+  }
+  .sr.lime   > .sr-bar { background: var(--lime); }
+  .sr.blue   > .sr-bar { background: var(--blue); }
+  .sr.orange > .sr-bar { background: var(--orange); }
+
+  /* ── raster display ──────────────────────────────────── */
+  .slab {
+    font-family: var(--raster); font-weight: 400;
+    line-height: .86; letter-spacing: -.015em;
+    margin: 0; text-transform: uppercase; display: block;
+  }
+  .xl  { font-size: 17vw; }
+  .lg  { font-size: 13.5vw; }
+  .md  { font-size: 10vw; }
+  .sec { font-size: 7.5vw; }
+  @media (min-width: 1100px) {
+    .xl { font-size: 15.5vw; } .lg { font-size: 12vw; }
+    .md { font-size: 8vw; }   .sec { font-size: 5.4vw; }
+  }
+  .hollow { color: transparent; -webkit-text-stroke: 2px var(--ink); }
+  .on-lime   { color: var(--lime); }
+  .on-blue   { color: var(--blue); }
+  .on-orange { color: var(--orange); }
+
+  /* ── hero ────────────────────────────────────────────── */
+  .hero { padding-top: 96px; padding-bottom: clamp(24px,4vw,54px); }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: clamp(18px,3vw,34px); }
+  .tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--ink2);
+    border: 1px solid var(--rule); padding: 4px 9px; background: var(--paper2);
+  }
+  .tag.l { border-color: var(--lime); color: #0a6a44; background: #e4f7ee; }
+  .tag.b { border-color: var(--blue); color: var(--blue); background: #ebe9fd; }
+  .tag.o { border-color: var(--orange); color: #b5300f; background: #ffede8; }
+
+  .stack { display: grid; gap: clamp(2px,.6vw,8px); }
+  .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 clamp(8px,2vw,30px); }
+
+  .herofoot {
+    display: grid; grid-template-columns: 1fr; gap: 22px;
+    margin-top: clamp(26px,4vw,46px); align-items: end;
+  }
+  @media (min-width: 900px) { .herofoot { grid-template-columns: 1.1fr 1fr; gap: 44px; } }
+
+  .lede { font-family: var(--mono); font-size: clamp(.92rem,1.5vw,1.05rem); line-height: 1.62; color: var(--ink2); margin: 0; max-width: 50ch; }
+
+  .cmd { display: flex; border: 1px solid var(--ink); background: var(--paper2); }
+  .cmd code { flex: 1; font-family: var(--mono); font-size: 11.5px; padding: 12px 13px; white-space: nowrap; overflow-x: auto; }
+  .cmd code b { color: var(--lime); }
+  .cmd button {
+    font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; border: 0; border-left: 1px solid var(--ink);
+    background: var(--ink); color: var(--paper); padding-inline: 15px; cursor: pointer;
+  }
+  .cmd button:hover { background: var(--lime); color: var(--ink); }
+  .acts { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+
+  /* ── terminal ────────────────────────────────────────── */
+  .term { border: 1px solid var(--ink); background: var(--screen); margin-top: clamp(26px,4vw,52px); }
+  .tbar { display: flex; align-items: center; gap: 6px; padding: 8px 11px; border-bottom: 1px solid #332838; font-family: var(--mono); font-size: 10px; color: #7d6f84; }
+  .tbar i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+  .tbar span { flex: 1; text-align: center; margin-right: 34px; }
+  .term pre { margin: 0; padding: 13px 15px 15px; font-family: var(--mono); font-size: 10px; line-height: 1.55; color: var(--screen-ink); overflow-x: auto; min-height: 220px; }
+  @media (min-width: 700px) { .term pre { font-size: 12.5px; } }
+  .tb{color:#6a5c71}.tt{color:#7fb2ff;font-weight:600}.ts{color:#4fd6a0;font-weight:600}
+  .tk{color:#4fd6a0;font-weight:600}.tl{color:#4fd6a0}.th{color:#7d6f84}
+
+  /* ── sections ────────────────────────────────────────── */
+  section { border-top: 1px solid var(--ink); padding-block: clamp(46px,7vw,110px); }
+  section.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  section.dark .slab { color: var(--paper); }
+  section.dark .hollow { color: transparent; -webkit-text-stroke-color: var(--paper); }
+  section.dark p.body { color: #bdb9b4; }
+  section.dark p.body strong { color: var(--paper); }
+
+  .head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: clamp(22px,3vw,40px); }
+  .head .no { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--faint); padding-top: 8px; flex: none; }
+
+  p.body { font-size: clamp(.95rem,1.4vw,1.05rem); line-height: 1.6; color: var(--ink2); max-width: 60ch; margin: 0 0 14px; }
+  p.body strong { color: var(--ink); font-weight: 600; }
+  code.i { font-family: var(--mono); font-size: .87em; background: var(--paper2); border: 1px solid var(--rule); padding: 0 4px; }
+  section.dark code.i { background: #2a2a28; border-color: #444; color: var(--paper); }
+
+  /* ── dossier cells ───────────────────────────────────── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); border: 1px solid var(--ink); }
+  .cell { border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 20px; background: var(--paper2); transition: background .15s; }
+  .cell:hover { background: var(--lime); }
+  .cell h4 { font-family: var(--raster); font-size: 12.5px; font-weight: 400; margin: 0 0 9px; }
+  .cell p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink2); }
+  .cell:hover p, .cell:hover h4 { color: var(--ink); }
+  .cell kbd { font-family: var(--mono); font-size: 11px; background: var(--paper); border: 1px solid var(--ink); padding: 1px 5px; }
+
+  /* ── ledger ──────────────────────────────────────────── */
+  .ledger { border: 1px solid currentColor; }
+  .lrow { display: grid; grid-template-columns: 1fr auto; gap: 14px; padding: 13px 17px; border-bottom: 1px solid var(--rule); font-family: var(--mono); font-size: 12.5px; align-items: baseline; }
+  section.dark .lrow { border-bottom-color: #3a3a38; }
+  .lrow:last-child { border-bottom: 0; }
+  .lrow b { font-family: var(--raster); font-size: 14px; font-weight: 400; }
+  .lrow .bar { grid-column: 1 / -1; height: 3px; background: var(--rule); margin-top: 6px; }
+  section.dark .lrow .bar { background: #3a3a38; }
+  .lrow .bar i { display: block; height: 100%; width: 0; background: var(--orange); }
+  .lrow.us { background: var(--lime); color: var(--ink); }
+  .lrow.us b { color: var(--ink); }
+  .lrow.us .bar { background: rgba(0,0,0,.2); }
+  .lrow.us .bar i { background: var(--ink); }
+
+  /* ── split + pad ─────────────────────────────────────── */
+  .split { display: grid; grid-template-columns: 1fr; gap: 26px; align-items: start; }
+  @media (min-width: 960px) { .split { grid-template-columns: 1fr 1.05fr; gap: 46px; } }
+  .pad { background: var(--screen); border: 1px solid var(--ink); padding: 18px 20px; min-height: 200px; font-family: var(--mono); font-size: 12.5px; line-height: 2; color: var(--screen-ink); overflow-x: auto; }
+  @media (min-width: 620px) { .pad { font-size: 14px; } }
+  .pad .mk { color: #4fd6a0; font-weight: 600; }
+  .pad .cur { display: inline-block; width: 8px; background: #4fd6a0; animation: blink 1.05s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0 } }
+
+  /* ── browser window mock ─────────────────────────────── */
+  .browser { border: 1px solid var(--ink); background: #fff; overflow: hidden; }
+  .bbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 11px; background: #e7e5e2; border-bottom: 1px solid var(--ink);
+  }
+  .bbar i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+  .burl {
+    flex: 1; background: #fff; border: 1px solid var(--rule);
+    border-radius: 3px; padding: 3px 9px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink2);
+    text-align: center; margin-inline: 6px; white-space: nowrap; overflow: hidden;
+  }
+  .burl b { color: var(--lime); font-weight: 600; }
+
+  .bbody { display: grid; grid-template-columns: 1fr; min-height: 300px; }
+  @media (min-width: 720px) { .bbody { grid-template-columns: 188px 1fr; } }
+
+  .bside { border-right: 1px solid var(--rule); background: #fafafa; padding: 12px; display: none; }
+  @media (min-width: 720px) { .bside { display: block; } }
+  .bside .t { font-size: 12.5px; font-weight: 700; margin-bottom: 9px; display: flex; align-items: center; gap: 6px; }
+  .bnew {
+    display: block; text-align: center; font-size: 11px; font-weight: 600;
+    background: var(--ink); color: #fff; border-radius: 5px; padding: 6px; margin-bottom: 8px;
+  }
+  .bsearch { font-size: 11px; color: #9a9a98; border: 1px solid var(--rule); border-radius: 5px; padding: 5px 8px; margin-bottom: 10px; }
+  .bitem { font-size: 11.5px; padding: 6px 8px; border-radius: 5px; color: var(--ink2); }
+  .bitem.on { background: #fff; border: 1px solid var(--rule); color: var(--ink); font-weight: 600; }
+  .bitem small { display: block; font-size: 10px; color: #a3a3a1; font-weight: 400; }
+
+  .bmain { padding: 14px 16px; }
+  .btitle { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+  .btabs { display: inline-flex; background: #f1f1ef; border-radius: 6px; padding: 2px; margin-bottom: 10px; }
+  .btab { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 4px; color: #8a8a88; }
+  .btab.on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .btools {
+    display: flex; flex-wrap: wrap; gap: 2px; padding: 4px;
+    border: 1px solid var(--rule); border-radius: 6px; background: #fafafa; margin-bottom: 10px;
+  }
+  .btool {
+    font-family: var(--mono); font-size: 11px; color: var(--ink2);
+    width: 24px; height: 22px; display: grid; place-items: center; border-radius: 4px;
+  }
+  .btool:hover { background: #eee; color: var(--ink); }
+  .bsep { width: 1px; background: var(--rule); margin-inline: 5px; }
+  .bdoc { font-size: 12.5px; line-height: 1.75; color: #2b2b29; }
+  .bdoc h5 { font-size: 15px; margin: 0 0 7px; }
+  .bdoc .task { display: flex; gap: 7px; align-items: baseline; }
+  .bdoc .box { font-family: var(--mono); color: var(--lime); font-weight: 700; }
+  .bdoc .box.off { color: #b6b6b4; }
+  .bdoc blockquote { margin: 9px 0; padding-left: 10px; border-left: 3px solid var(--rule); color: #6f6f6d; }
+  .bdoc a { color: var(--blue); }
+
+  /* ── footer ──────────────────────────────────────────── */
+  footer { background: var(--ink); color: var(--paper); padding-block: clamp(40px,6vw,80px) 34px; }
+  footer .acts { margin-top: 26px; }
+  footer .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; font-family: var(--mono); font-size: 11px; color: #b3b0ac; margin-top: 30px; border-top: 1px solid #3a3a38; padding-top: 18px; }
+  footer a { color: var(--paper); }
+  footer .g { color: var(--lime); }
+
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .sr::after { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="strip" aria-hidden="true">
+  <ul id="mq"><li>
+    <span>NIB v1.2.0</span><span class="g">///</span><span>NOTHING LEAVES THIS MACHINE</span><span class="g">///</span>
+    <span>NO ACCOUNT</span><span class="g">///</span><span>NO CLOUD</span><span class="g">///</span>
+    <span>NO TELEMETRY</span><span class="g">///</span><span>ONE FILE ON YOUR DISK</span><span class="g">///</span>
+    <span>19 MB</span><span class="g">///</span><span>MIT</span><span class="g">///</span>
+  </li></ul>
+</div>
+
+<nav>
+  <div class="navrow">
+    <a class="mark" href="#top"><i>$</i> nib</a>
+    <div class="fill"></div>
+    <div class="navlinks">
+      <a href="#file">The file</a><a href="#lists">Lists</a>
+      <a href="#speed">Speed</a><a href="#custody">Custody</a><a href="#browser">Browser</a>
+    </div>
+    <a class="gh" href="https://github.com/Prathmeshgumal/nib">
+      <span class="mkgh">★ View on GitHub</span><span class="n" id="gh-stars">—</span>
+    </a>
+    <a class="go" href="https://github.com/Prathmeshgumal/nib/releases/latest">Download</a>
+  </div>
+</nav>
+
+<main id="top">
+  <div class="wrap hero">
+    <div class="tags">
+      <span class="tag l">[ STATUS: SHIPPED ]</span>
+      <span class="tag">[ FILE: v1.2.0 ]</span>
+      <span class="tag b">[ PLATFORM: LINUX ]</span>
+      <span class="tag o">[ CLEARANCE: NONE REQUIRED ]</span>
+    </div>
+
+    <h1 class="stack" style="margin:0">
+      <span class="line">
+        <span class="sr"><span class="sr-in slab lg">Your</span></span>
+        <span class="sr lime"><span class="sr-in slab lg on-lime">notes</span></span>
+      </span>
+      <span class="line"><span class="sr"><span class="sr-in slab xl hollow">never</span></span></span>
+      <span class="line">
+        <span class="sr"><span class="sr-in slab md">leave</span></span>
+        <span class="sr blue"><span class="sr-in slab md on-blue">this</span></span>
+      </span>
+      <span class="line"><span class="sr"><span class="sr-in slab lg">machine.</span></span></span>
+    </h1>
+
+    <div class="herofoot">
+      <p class="lede">
+        A Markdown note taker that lives in your terminal — and in your browser,
+        from the same 19 MB binary. One SQLite file on your own disk. Nothing
+        running when you quit.
+      </p>
+      <div>
+        <div class="cmd">
+          <code id="cmd"><b>$</b> curl -L .../releases/latest/download/nib-linux-amd64 -o nib</code>
+          <button id="copy" type="button">copy</button>
+        </div>
+        <div class="acts">
+          <a class="go" href="https://github.com/Prathmeshgumal/nib/releases/latest">Download v1.2.0</a>
+          <a class="go ghost" href="https://github.com/Prathmeshgumal/nib">Source</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="term">
+      <div class="tbar">
+        <i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
+        <span>nib</span>
+      </div>
+      <pre id="screen"></pre>
+    </div>
+  </div>
+
+  <!-- 01 ─────────────────────────────────────────────── -->
+  <section id="file">
+    <div class="wrap">
+      <div class="head">
+        <span class="no">[ 01 ]</span>
+        <div>
+          <span class="sr"><span class="sr-in slab sec">Contents</span></span>
+          <span class="sr orange"><span class="sr-in slab sec on-orange">of the file</span></span>
+        </div>
+      </div>
+      <p class="body" style="margin-bottom:26px">
+        Two panes, driven entirely from the keyboard. Press <code class="i">?</code>
+        and every key is listed without leaving the app.
+      </p>
+      <div class="grid">
+        <div class="cell"><h4>Move</h4><p><kbd>j</kbd> <kbd>k</kbd> between notes. <kbd>↑</kbd><kbd>↓</kbd> scroll the one you are reading — so the wheel does too.</p></div>
+        <div class="cell"><h4>Write</h4><p><kbd>n</kbd> for a new note, <kbd>↵</kbd> to edit. Leave the title blank and the first line becomes it.</p></div>
+        <div class="cell"><h4>Format</h4><p>Bold, italic, strikethrough, code, headings, three kinds of list, quotes and rules — all on keys.</p></div>
+        <div class="cell"><h4>Search</h4><p><kbd>/</kbd> narrows titles and bodies as you type. Four milliseconds across a thousand notes.</p></div>
+        <div class="cell"><h4>Recover</h4><p><kbd>d</kbd> moves a note to a trash. <kbd>u</kbd> walks back, <kbd>T</kbd> browses thirty days of them.</p></div>
+        <div class="cell"><h4>Browser</h4><p><kbd>w</kbd> opens the same notes in a React UI, served from inside the binary, bound to localhost.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 ─────────────────────────────────────────────── -->
+  <section id="lists">
+    <div class="wrap">
+      <div class="head">
+        <span class="no">[ 02 ]</span>
+        <div>
+          <span class="sr"><span class="sr-in slab sec">Lists finish</span></span>
+          <span class="sr lime"><span class="sr-in slab sec on-lime">themselves</span></span>
+        </div>
+      </div>
+      <div class="split">
+        <div>
+          <p class="body">
+            Press <code class="i">↵</code> at the end of a list item and the next
+            one is already waiting — tasks, bullets, numbers that keep counting,
+            blockquotes. Indentation is kept, so a nested item stays nested.
+          </p>
+          <p class="body">
+            Press it once more on the empty item and the marker disappears.
+            That is how a list is finished: no mouse, no menu.
+          </p>
+          <p class="body" style="color:var(--faint)">
+            <code class="i">alt+↵</code> gives a plain line break. Shift+Enter
+            cannot: a terminal sends the identical byte for it as for Enter.
+          </p>
+        </div>
+        <div class="pad" id="pad" aria-label="List items continuing as you type"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 ─────────────────────────────────────────────── -->
+  <section id="speed" class="dark">
+    <div class="wrap">
+      <div class="head">
+        <span class="no" style="color:#8d8b87">[ 03 ]</span>
+        <div>
+          <span class="sr lime"><span class="sr-in slab sec">Nothing to</span></span>
+          <span class="sr lime"><span class="sr-in slab sec on-lime">boot first</span></span>
+        </div>
+      </div>
+      <p class="body" style="margin-bottom:26px">
+        Measured in one sitting on one machine, every row the same way — wall
+        clock around a subprocess, median of twenty-five runs. The first four are
+        what each runtime costs <strong>before a line of your code runs</strong>.
+      </p>
+
+      <div class="ledger" id="ledger">
+        <div class="lrow"><span>/bin/true — process floor</span><b>0.8 ms</b><span class="bar"><i data-w="2"></i></span></div>
+        <div class="lrow"><span>Python, empty script</span><b>14.9 ms</b><span class="bar"><i data-w="30"></i></span></div>
+        <div class="lrow"><span>Node, empty script</span><b>24.3 ms</b><span class="bar"><i data-w="49"></i></span></div>
+        <div class="lrow"><span>Node, after loading React</span><b>49.7 ms</b><span class="bar"><i data-w="100"></i></span></div>
+        <div class="lrow us"><span><strong>nib</strong> — opened 1,000 notes, ready to serve</span><b>18.7 ms</b><span class="bar"><i data-w="38"></i></span></div>
+      </div>
+
+      <p class="body" style="margin-top:24px">
+        The last row is not a floor. It is the whole job — opening the database,
+        reading every note, standing up the server — and it finishes before Node
+        has started up with nothing in it at all.
+      </p>
+      <p class="body" style="color:#8d8b87">
+        Go is not magic; a careful Rust or C build would beat it. What Go buys is
+        that the fast path is the default one.
+      </p>
+    </div>
+  </section>
+
+  <!-- 04 ─────────────────────────────────────────────── -->
+  <section id="custody">
+    <div class="wrap">
+      <div class="head">
+        <span class="no">[ 04 ]</span>
+        <div>
+          <span class="sr"><span class="sr-in slab sec">Chain of</span></span>
+          <span class="sr orange"><span class="sr-in slab sec on-orange">custody</span></span>
+        </div>
+      </div>
+      <div class="split">
+        <div>
+          <p class="body">
+            Every note lives in one SQLite file on your own disk. Copy it and you
+            have copied everything — there is no export, because there is nothing
+            to export it from.
+          </p>
+          <p class="body">
+            The browser interface binds to <code class="i">127.0.0.1</code>, so
+            nothing else on your network can reach it. No telemetry, no sync, no
+            server, no account to create.
+          </p>
+          <div class="tags" style="margin-top:20px;margin-bottom:0">
+            <span class="tag">[ SNAPSHOT ON EVERY LAUNCH ]</span>
+            <span class="tag">[ 30-DAY TRASH ]</span>
+          </div>
+        </div>
+        <div class="pad" style="line-height:1.9;min-height:0">
+          <span style="color:#8c7d93">~/.local/share/nib/</span><br>
+          &nbsp;&nbsp;<span class="mk">nib.db</span><br>
+          &nbsp;&nbsp;<span class="mk">backups/</span><br><br>
+          <span style="color:#8c7d93">$ cp nib.db /somewhere/safe</span><br>
+          <span class="mk">done.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- 05 ─────────────────────────────────────────────── -->
+  <section id="browser">
+    <div class="wrap">
+      <div class="head">
+        <span class="no">[ 05 ]</span>
+        <div>
+          <span class="sr"><span class="sr-in slab sec">Same notes,</span></span>
+          <span class="sr blue"><span class="sr-in slab sec on-blue">in a browser</span></span>
+        </div>
+      </div>
+
+      <div class="split" style="align-items:start">
+        <div>
+          <p class="body">
+            Press <code class="i">w</code> in the terminal and the same notes
+            open in a browser — a formatting toolbar, live preview and a
+            light or dark theme, for the times you would rather point at
+            something than remember a key.
+          </p>
+          <p class="body">
+            <strong>It is the same file, open twice.</strong> Write in one, press
+            <code class="i">r</code> in the other and it is there. The page is
+            served from inside the binary, so there is nothing to install and
+            nothing to deploy.
+          </p>
+          <p class="body" style="color:var(--faint)">
+            Bound to <code class="i">127.0.0.1</code>, so it is reachable from
+            this machine and nowhere else. Press <code class="i">w</code> again
+            and the server stops.
+          </p>
+          <div class="tags" style="margin-top:20px;margin-bottom:0">
+            <span class="tag b">[ LOCALHOST ONLY ]</span>
+            <span class="tag">[ REACT + TAILWIND ]</span>
+            <span class="tag">[ EMBEDDED IN THE BINARY ]</span>
+          </div>
+        </div>
+
+        <div class="browser">
+          <div class="bbar">
+            <i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
+            <span class="burl"><b>localhost</b>:4321</span>
+          </div>
+          <div class="bbody">
+            <div class="bside">
+              <div class="t">◆ Notes</div>
+              <div class="bnew">+ New note</div>
+              <div class="bsearch">⌕ Search notes…</div>
+              <div class="bitem on">Meeting notes<small>just now</small></div>
+              <div class="bitem">Shipping checklist<small>2 hours ago</small></div>
+              <div class="bitem">Reading list<small>yesterday</small></div>
+              <div class="bitem">Ideas<small>3 days ago</small></div>
+            </div>
+            <div class="bmain">
+              <div class="btitle">Meeting notes</div>
+              <div class="btabs"><span class="btab on">Write</span><span class="btab">Preview</span></div>
+              <div class="btools">
+                <span class="btool">H</span><span class="btool"><b>B</b></span>
+                <span class="btool"><i>I</i></span><span class="btool">S</span>
+                <span class="bsep"></span>
+                <span class="btool">❝</span><span class="btool">&lt;&gt;</span>
+                <span class="btool">{ }</span><span class="btool">🔗</span>
+                <span class="bsep"></span>
+                <span class="btool">•</span><span class="btool">1.</span>
+                <span class="btool">☑</span><span class="btool">―</span>
+              </div>
+              <div class="bdoc">
+                <h5>Meeting notes — 14 Sep</h5>
+                <div class="task"><span class="box">[✓]</span><span>Agree the release date</span></div>
+                <div class="task"><span class="box">[✓]</span><span>Write the migration plan</span></div>
+                <div class="task"><span class="box off">[ ]</span><span>Draft the rollback steps</span></div>
+                <div class="task"><span class="box off">[ ]</span><span>Share with the team</span></div>
+                <blockquote>Ship Thursday if CI is green.</blockquote>
+                <div>Context is in <a href="#browser">the wiki</a>.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="stack">
+      <span class="line"><span class="sr lime"><span class="sr-in slab md">Take it.</span></span></span>
+      <span class="line"><span class="sr lime"><span class="sr-in slab md on-lime">It's free.</span></span></span>
+    </div>
+    <div class="acts">
+      <a class="go" style="background:var(--lime);border-color:var(--lime);color:var(--ink)" href="https://github.com/Prathmeshgumal/nib/releases/latest">Download v1.2.0</a>
+      <a class="go" style="background:none;color:var(--paper);border-color:var(--paper)" href="https://github.com/Prathmeshgumal/nib">GitHub</a>
+    </div>
+    <div class="meta">
+      <span>MIT</span>
+      <span>Go <span class="g">+</span> Bubble Tea <span class="g">+</span> SQLite <span class="g">+</span> React</span>
+      <span><a href="https://github.com/Prathmeshgumal/nib">github.com/Prathmeshgumal/nib</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</body>
+</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function () {
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var mq = document.getElementById('mq');
+  if (mq) mq.appendChild(mq.firstElementChild.cloneNode(true));
+
+  /* ── smooth scroll, written inline: Lenis is not on the allowed CDN ── */
+  if (!reduced && window.matchMedia('(pointer: fine)').matches) {
+    var target = window.scrollY, current = target, running = false;
+    window.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      target = Math.max(0, Math.min(target + e.deltaY,
+        document.documentElement.scrollHeight - window.innerHeight));
+      if (!running) { running = true; requestAnimationFrame(step); }
+    }, { passive: false });
+    function step() {
+      current += (target - current) * 0.12;
+      if (Math.abs(target - current) < 0.4) { current = target; running = false; }
+      window.scrollTo(0, current);
+      if (window.ScrollTrigger) ScrollTrigger.update();
+      if (running) requestAnimationFrame(step);
+    }
+    window.addEventListener('scroll', function () {
+      if (!running) { target = current = window.scrollY; }
+    }, { passive: true });
+  }
+
+  /* ── the swipe reveal, repeated throughout ── */
+  if (window.gsap && window.ScrollTrigger && !reduced) {
+    gsap.registerPlugin(ScrollTrigger);
+
+    // The signature device: a coloured panel sweeps across, and the word is
+    // there when it leaves.
+    gsap.utils.toArray('.sr').forEach(function (el) {
+      var inner = el.querySelector('.sr-in');
+      var bar = document.createElement('span');
+      bar.className = 'sr-bar';
+      el.appendChild(bar);
+      gsap.set(inner, { opacity: 0 });
+
+      gsap.timeline({ scrollTrigger: { trigger: el, start: 'top 88%', once: true } })
+        .to(bar, { scaleX: 1, duration: 0.42, ease: 'power3.inOut' })
+        .set(inner, { opacity: 1 })
+        .set(bar, { transformOrigin: 'right center' })
+        .to(bar, { scaleX: 0, duration: 0.42, ease: 'power3.inOut' });
+    });
+
+    // bars in the ledger
+    gsap.utils.toArray('#ledger .bar i').forEach(function (bar, i) {
+      gsap.to(bar, {
+        width: bar.dataset.w + '%', duration: 0.9, ease: 'power3.out', delay: i * 0.08,
+        scrollTrigger: { trigger: '#ledger', start: 'top 80%', once: true }
+      });
+    });
+
+    // cells stagger in
+    gsap.from('.cell', {
+      opacity: 0, y: 18, duration: 0.5, stagger: 0.05, ease: 'power2.out',
+      scrollTrigger: { trigger: '.grid', start: 'top 85%', once: true }
+    });
+  } else {
+    document.querySelectorAll('.sr-in').forEach(function (n) { n.style.opacity = 1; });
+    document.querySelectorAll('#ledger .bar i').forEach(function (b) { b.style.width = b.dataset.w + '%'; });
+  }
+
+  /* ── hero terminal ── */
+  var SCREEN = [
+ '<span class="tb">╭──────────────────────────────────────────────────────╮╭──────────────────────────╮</span>',
+ '│Meeting notes                                         ││Edited  just now          │',
+ '│                                                      ││Tasks   2 of 4 done       │',
+ '│                                                      ││Length  30 words          │',
+ '│  • [✓] Agree the date                                │╰──────────────────────────╯',
+ '│  • [✓] Migration plan                                │╭──────────────────────────╮',
+ '│  • [ ] Rollback steps                                ││Notes (5)                 │',
+ '│  • [ ] Tell the team                                 ││▸ Meeting notes           │',
+ '│                                                      ││  Shipping checklist      │',
+ '│  │ Ship Thursday if CI is green.                     ││  Reading list            │',
+ '│                                                      ││  Ideas                   │',
+ '│                                                      ││  Welcome to nib          │',
+ '│                                                      ││                          │',
+ '╰──────────────────────────────────────────────────────╯╰──────────────────────────╯',
+ '<span class="th"> j/k note  ↑/↓ scroll  ↵ edit  n new  / search  R source  o link  d trash  w web  ? help  q quit</span>'
+  ];
+  var screen = document.getElementById('screen');
+  if (screen) {
+    if (reduced) screen.innerHTML = SCREEN.join('\n');
+    else { var r = 0; (function p(){ if (r > SCREEN.length) return;
+      screen.innerHTML = SCREEN.slice(0, r).join('\n'); r++; setTimeout(p, 55); })(); }
+  }
+
+  /* ── list demo ── */
+  var pad = document.getElementById('pad');
+  function runPad() {
+    if (!pad) return;
+    if (reduced) {
+      pad.innerHTML = '<span class="mk">- [ ] </span>buy milk<br><span class="mk">- [ ] </span>water the plants<br><span class="mk">- [ ] </span>book the tickets<br><br>and the list is over.';
+      return;
+    }
+    var S = [{t:'- [ ] buy milk'},{e:'- [ ] '},{t:'water the plants'},{e:'- [ ] '},
+             {t:'book the tickets'},{e:'- [ ] '},{c:1},{t:'and the list is over.'}];
+    var lines = [''], i = 0, ch = 0;
+    function draw(cur) {
+      pad.innerHTML = lines.map(function (l) {
+        return l.replace(/^(- \[[ x]\] )/, '<span class="mk">$1</span>');
+      }).join('<br>') + (cur ? '<span class="cur">&nbsp;</span>' : '');
+    }
+    (function tick() {
+      if (i >= S.length) return setTimeout(function(){ lines=['']; i=0; ch=0; tick(); }, 2600);
+      var s = S[i];
+      if (s.t) { if (ch < s.t.length) { lines[lines.length-1] += s.t[ch++]; draw(1); return setTimeout(tick, 50); }
+                 i++; ch = 0; return setTimeout(tick, 520); }
+      if (s.e) { lines.push(s.e); draw(1); i++; return setTimeout(tick, 430); }
+      if (s.c) { lines[lines.length-1] = ''; draw(1); i++; return setTimeout(tick, 720); }
+    })();
+  }
+  if (pad) {
+    new IntersectionObserver(function (es, o) {
+      es.forEach(function (e) { if (e.isIntersecting) { runPad(); o.disconnect(); } });
+    }, { threshold: 0.2 }).observe(pad);
+  }
+
+  /* ── live repo numbers, so the page ages with the project ── */
+  (function () {
+    var els = [document.getElementById('gh-stars')];
+    if (!els[0]) return;
+    fetch('https://api.github.com/repos/Prathmeshgumal/nib')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d) throw 0;
+        var n = d.stargazers_count;
+        els.forEach(function (el) { if (el) el.textContent = n; });
+      })
+      .catch(function () {
+        // Rate-limited or offline: say nothing rather than show a wrong number.
+        els.forEach(function (el) { if (el) el.textContent = '★'; });
+      });
+  })();
+
+  var btn = document.getElementById('copy');
+  if (btn) btn.addEventListener('click', function () {
+    var t = 'curl -L https://github.com/Prathmeshgumal/nib/releases/latest/download/nib-linux-amd64 -o nib';
+    function done(l){ btn.textContent = l; setTimeout(function(){ btn.textContent='copy'; }, 1600); }
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function(){done('copied');}, function(){done('select it');});
+    else done('select it');
+  });
+})();
+</script>
+</body>
+</html>

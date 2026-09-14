@@ -289,6 +289,12 @@ the same script you would.
 
 ---
 
+## The site
+
+The landing page lives in [`site/`](./site) — one static HTML file, no build
+step. Look at it with `python3 -m http.server -d site 8000`, publish it with
+`npx vercel --cwd site --prod`.
+
 ## Contributing
 
 Issues and pull requests are welcome. If you are changing behaviour, a test that fails
