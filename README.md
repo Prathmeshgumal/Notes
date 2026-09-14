@@ -34,9 +34,10 @@ Most note apps make you pick a side. Terminal tools are fast but ask you to give
 readable, formatted view. Desktop apps are comfortable but ship a browser engine to draw
 a text box, and want an account before you can write anything down.
 
-`nib` is one 20 MB binary that gives you both views of the same SQLite file. It starts
-in 46 ms with a thousand notes in it, holds about 27 MB of memory while you write, and
-leaves nothing running when you quit.
+`nib` is one 20 MB binary that gives you both views of the same SQLite file. It opens a
+thousand notes and is ready in under 20 ms — less than Node takes to start an empty
+script — holds about 28 MB of memory while you write, and leaves nothing running when
+you quit.
 
 ---
 
@@ -122,20 +123,21 @@ is tuned for short pauses rather than peak throughput — which is exactly the t
 wants. The practical effect is that startup is dominated by real work instead of by
 loading an interpreter.
 
-Measured on this machine, comparing like for like — the floor each runtime pays *before
-your application code runs at all*:
+Measured in one sitting on one machine, every row the same way — wall clock around a
+subprocess, median of 25 runs. The first four are what each runtime costs *before a line
+of your code runs*:
 
 | | Time |
 | --- | --- |
-| `/bin/true` — process creation floor | 0.7 ms |
-| Python, empty script | 13.4 ms |
-| Node, empty script | 20.4 ms |
-| Node, after `require('react')` + `react-dom` | 38.7 ms |
-| **`nib`, first painted frame with 1,000 notes** | **46 ms** |
+| `/bin/true` — process creation floor | 0.8 ms |
+| Python, empty script | 14.9 ms |
+| Node, empty script | 24.3 ms |
+| Node, after `require('react')` + `react-dom` | 49.7 ms |
+| **`nib` — opened 1,000 notes and ready to serve** | **18.7 ms** |
 
-That last row is not a floor. It is the whole application: opening the database, reading
-every note, rendering Markdown to ANSI and painting a full two-pane UI. A Node-based
-equivalent would begin from the 38.7 ms row and add its own work on top.
+The last row is not a floor. It is the whole job: opening the database, reading every
+note, and standing up the server. It finishes before Node has finished starting up with
+nothing in it at all.
 
 **The honest version of this comparison:** Go is not magic, and a carefully written Rust
 or C TUI would beat it. What Go buys is that the fast path is the default one — no bundler,
@@ -152,8 +154,8 @@ Measured on an Intel i5-13450HX running Ubuntu, with a **1,000-note** database.
 | | |
 | --- | --- |
 | Binary | **19.8 MB**, static, stripped |
-| Cold start | **46 ms** median (34–50 ms) |
-| Memory, terminal UI | **26–30 MB** resident |
+| Ready with 1,000 notes | **18.7 ms** median (18–20 ms) |
+| Memory, terminal UI | **28 MB** resident |
 | Memory, web server | **24.6 MB** idle, 28.5 MB under load |
 | CPU while open and idle | **~1.4%** of one core |
 | CPU after you quit | **none** — no daemon, no background process |
@@ -163,14 +165,18 @@ And the operations you actually perform:
 
 | | |
 | --- | --- |
-| Search across 1,000 notes | **7.2 ms** |
-| List all 1,000 notes | **5.2 ms** |
+| Search across 1,000 notes | **4.6 ms** |
+| List all 1,000 notes | **3.8 ms** |
 | Write 1,000 notes over the API | **0.3 s** |
 | Move the cursor (render a note) | **71 µs** |
 
-Startup is flat: 49 ms with 41 notes, 46 ms with 1,000. The database is opened, not read
-into memory, so the cost of having a lot of notes lands on search — and searching a
-thousand notes still finishes inside a single frame at 60 Hz.
+The database is opened, not read into memory, so having a lot of notes costs you on
+search rather than on startup — and searching a thousand of them still finishes inside a
+single frame at 60 Hz.
+
+These are real measurements, not estimates, but they are one machine on one afternoon:
+an Intel i5-13450HX under Ubuntu, with everything in the page cache. Run them yourself
+and you will get different absolute numbers — the ratios are the part that travels.
 
 For scale on the memory number: the smallest Chrome renderer process running on this same
 machine while I measured was 155 MB, and the largest was 405 MB.
