@@ -18,9 +18,8 @@ func longNoteModel(t *testing.T) model {
 	return press(m, reloadedMsg{notes: mustList(t, st)})
 }
 
-// A terminal turns the mouse wheel into arrow keys, so the arrows must scroll
-// the note rather than jump between notes.
-func TestArrowsScrollThePreview(t *testing.T) {
+// j and k scroll the note being read, and leave the selection alone.
+func TestJKScrollThePreview(t *testing.T) {
 	m := longNoteModel(t)
 	if m.preview.TotalLineCount() <= m.preview.Height {
 		t.Fatal("the test note is not longer than the pane")
@@ -28,25 +27,26 @@ func TestArrowsScrollThePreview(t *testing.T) {
 
 	start := m.cursor
 	for i := 0; i < 12; i++ {
-		m = press(m, tea.KeyMsg{Type: tea.KeyDown})
+		m = press(m, key('j'))
 	}
 	if m.preview.YOffset != 12 {
-		t.Errorf("12 down presses scrolled %d lines, want 12", m.preview.YOffset)
+		t.Errorf("12 j presses scrolled %d lines, want 12", m.preview.YOffset)
 	}
 	if m.cursor != start {
 		t.Errorf("scrolling changed the selected note (%d -> %d)", start, m.cursor)
 	}
 
 	for i := 0; i < 5; i++ {
-		m = press(m, tea.KeyMsg{Type: tea.KeyUp})
+		m = press(m, key('k'))
 	}
 	if m.preview.YOffset != 7 {
 		t.Errorf("after scrolling back, offset = %d, want 7", m.preview.YOffset)
 	}
 }
 
-// j and k still move between notes, and do not scroll.
-func TestJKMoveBetweenNotes(t *testing.T) {
+// Arriving at another note starts it at the top, however deep into the last
+// one you had scrolled.
+func TestMovingToAnotherNoteResetsTheScroll(t *testing.T) {
 	m, st := newTestModel(t)
 	for _, title := range []string{"one", "two", "three"} {
 		if _, err := st.Create(title, strings.Repeat(title+"\n", 100)); err != nil {
@@ -56,16 +56,19 @@ func TestJKMoveBetweenNotes(t *testing.T) {
 	m = press(m, tea.WindowSizeMsg{Width: 100, Height: 24})
 	m = press(m, reloadedMsg{notes: mustList(t, st)})
 
-	m = press(m, key('j'))
+	for i := 0; i < 20; i++ {
+		m = press(m, key('j'))
+	}
+	if m.preview.YOffset == 0 {
+		t.Fatal("the note did not scroll, so the reset cannot be observed")
+	}
+
+	m = press(m, key('s'))
 	if m.cursor != 1 {
-		t.Errorf("j moved to %d, want 1", m.cursor)
+		t.Errorf("s moved to %d, want 1", m.cursor)
 	}
 	if m.preview.YOffset != 0 {
 		t.Errorf("moving to another note left the preview scrolled to %d", m.preview.YOffset)
-	}
-	m = press(m, key('k'))
-	if m.cursor != 0 {
-		t.Errorf("k moved to %d, want 0", m.cursor)
 	}
 }
 

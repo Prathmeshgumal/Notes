@@ -26,7 +26,7 @@ nothing running in the background.
 The note gets the screen. The right-hand column carries three facts about what you are
 reading and the list of everything else.
 
-Press `w` and the same notes open in a browser with a formatting toolbar and live
+Press `W` and the same notes open in a browser with a formatting toolbar and live
 preview. Both stay open at once, backed by the same file.
 
 ---
@@ -164,8 +164,8 @@ at that position.
 
 | Key | Does |
 | --- | --- |
-| `j` | Next note |
-| `k` | Previous note |
+| `s` / `↓` | Next note |
+| `w` / `↑` | Previous note |
 | `g` / `G` | Jump to the first / last note |
 | `r` | Reload from disk (picks up changes made in the web UI) |
 | `?` | Full help — any key closes it |
@@ -177,14 +177,14 @@ The note pane scrolls, and shows a scrollbar when there is more than fits.
 
 | Key | Does |
 | --- | --- |
-| `↑` / `↓` | Scroll one line |
+| `j` / `k` | Scroll one line, down / up |
 | `space` / `b` | Scroll a page — `pgup` / `pgdn` do the same |
 | `ctrl+d` / `ctrl+u` | Scroll half a page |
 | `home` / `end` | Jump to the top / bottom |
 
-**The mouse wheel scrolls the note.** A terminal turns the wheel into arrow keys, which
-is why the arrows scroll the note rather than moving between notes — use `j` and `k` for
-that.
+**The mouse wheel moves between notes.** A terminal turns the wheel into arrow keys,
+and the arrows move between notes — so the wheel does too. Use `j` and `k` to scroll the
+note you are reading.
 
 ### Copying a note
 
@@ -332,7 +332,7 @@ is purged the next time the app starts.
 
 | Key | Does |
 | --- | --- |
-| `j` / `k` | Move through the trashed notes |
+| `w` / `s` | Move through the trashed notes |
 | `↵` | Restore the selected note |
 | `d` | Delete it for good — asks first, and cannot be undone |
 | `E` | Empty the trash — asks first, and cannot be undone |
@@ -346,8 +346,8 @@ before the app started is still in `backups/` either way.
 
 | Key | Does |
 | --- | --- |
-| `w` | Start the web UI and open your browser |
-| `w` again | Stop it |
+| `W` | Start the web UI and open your browser |
+| `W` again | Stop it |
 
 While it's running, the status line shows the address.
 
